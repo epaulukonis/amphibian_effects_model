@@ -19,10 +19,20 @@ pyra<-pest[1:10,]
 #cSoil is a conversion from application rate to estimate soil concentration
 
 ##calculate parameters, add in parameters from ABC
-#for Kp: I need mol-weight and logKow info of Pyraclostrobin
-molweight<-387.8 #g/mol #comptox
-logKow<- 4.44 #comptox
-kp =  10^(-2.72+(0.71*logKow)-(0.0061*molweight))
+#for Kp: I need mol-weight and logKow info of Pyraclostrobin and Metconazole
+
+#treat seperately - we'll be modeling added toxicity via the ABC route
+
+#pyra
+pmolweight<-387.8 #g/mol #comptox
+plogKow<- 4.44 #comptox
+#metconazole
+mmolweight<-319.8 #g/mol #comptox
+mlogKow<- 3.77 #comptox
+
+kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
+kp_met =  10^(-2.72+(0.71*mlogKow)-(0.0061*mmolweight))
+
 dt<-param[1,2]
 move_rate<-param[3,2]
 hl<-4.91*24 #from comptox profile
