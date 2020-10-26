@@ -1,0 +1,13 @@
+Parameter,Value
+dt_mean,0.001018886
+dt_sd,8.44E-06
+movement_rate_mean,14.56600003
+movement_rate_sd,14.56600003
+bioavail_mean,0.206536711
+bioavail_sd,0.001569651
+dermal_sa_slope_mean,6.049180428
+dermal_sa_slope_sd,1.563031159
+dermal_sa_exponent_mean,0.60512188
+dermal_sa_exponent_sd,0.002727632
+dermal_fraction_mean,0.491431105
+dermal_fraction_sd,0.003767917
