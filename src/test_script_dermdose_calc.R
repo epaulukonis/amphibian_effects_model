@@ -2,17 +2,12 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-#setwd("C:/Users/eliza/Dropbox/paulukonis_ORISE/PopulationEffectsWork/amphibian_effects_model")
-#load('myEnvironment.RData')
-
-#12/21/20
-#format 4700 rows (100 sets of 47), with each set as an individual 'id'
-#variation between studies has been accounted for in the division of 
+setwd('C:\\Users\\eliza\\Dropbox\\amphib_modeling_manuscript\\manuscript_pop_modeling\\amphibian_effects_model')
+load('myEnvironment.RData')
 
 effects<-read.csv('data_in/Headline_updated.csv')
-effectsx<-effects #dataset for plot prep
 param<-read.csv('data_in/parameters.csv')
-nsims<-100
+nsims<-1000
 
 #Body weight ----
 #desired output is 100 simulations of distributions of bw for every combo of study*species*dose
@@ -45,20 +40,19 @@ by_s<-split(effects, list(effects$Study,effects$Species,effects$Application_Rate
 bw_sim<-replicate(nsims,
                   {normalize <- lapply(by_s, function(y) rnorm(nrow(y), mean=y[[11]], sd=y[[19]]))
                   bw_sim<-as.data.frame(unlist(normalize))
-                  bw_sim<-tibble::rownames_to_column(bw_sim, "row_names")
+                  #bw_sim<-tibble::rownames_to_column(bw_sim, "row_names")
                   })
 bw_sim<-do.call(cbind.data.frame, bw_sim)
-bw_sim<-bw_sim[,c(1,seq(2, ncol(bw_sim), by=2))] 
-colnames(bw_sim)[2:nsims]<-names<-paste0("BW",1:nsims,"")
-colnames(bw_sim)[1]<-'Study'
+#bw_sim<-bw_sim[,c(1,seq(2, ncol(bw_sim), by=2))] 
+colnames(bw_sim)[1:nsims]<-names<-paste0("BW",1:nsims,"")
+#colnames(bw_sim)[1]<-'Study'
 
 #Survival ---- 
 #need to modify survival by duration, using an exponential growth curve
 #then use a binomial distribution to estimate probability of survival
 effects$half_life<-(effects$Duration_h*log(2))/log(1/effects$Survival)
 effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
-# effectsx$half_life<-(effectsx$Duration_h*log(2))/log(1/effectsx$Survival)
-# effectsx$adj_sur_96<-round(1/(2^(96/effectsx$half_life)),3)
+#effectsx<-effects # for other dermal calc
 
 survival_sim <- matrix(data=NA,nrow=nrow(effects),ncol=nsims)
 colnames(survival_sim)[1:nsims]<-paste0("Sur",1:nsims,"")
@@ -68,7 +62,6 @@ survival_sim[i,]<-round(survival_sim[i,]/effects[i,17],3) #divide the number sur
 }
 survival_sim<-as.data.frame(survival_sim)
 
-#observations, trials/observation, and probability of survival
 
 #Exposure Parameters----
 exposure_sims <- matrix(data=NA,nrow=nsims,ncol=6)
@@ -94,22 +87,18 @@ hl<-4.91*24 #from comptox profile
 #calculate soil concentrations; application rate will remain the same, the exponent value changes with exposure parameter simulations
 soil_concs_degs<-as.data.frame(log(2)/hl*96/exposure_sims$movement_rate_mean) #use 96 as duration, as we adjusted all survivals for a 96h timeframe
 soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm #converts it into units of ugg #this comes from Weir
-
 my_list<-list()
-for (j in 2:ncol(bw_sim)){
-  for (i in 1:nrow(exposure_sims)){
-    for (t in 1:nrow(soil_concs_degs)){
-dsa<-exposure_sims[i,5]*bw_sim[,j]^exposure_sims[i,5]
-dermal_dose<-(soil_concs^soil_concs_degs[t,] * kp_pyra * (dsa/exposure_sims[i,1]) * exposure_sims[i,6] * exposure_sims[i,3])/bw_sim[,j]
-my_list[[j]]<-dermal_dose
-    }}}
-
-my_list[57] #check the list outputs
-my_list<-my_list[-1]#remove first empty list
+for (i in 1:nsims){
+  dsa<-exposure_sims[i,5]*bw_sim[,i]^exposure_sims[i,5]
+  dermal_dose<-(soil_concs^soil_concs_degs[i,] * kp_pyra * (dsa/exposure_sims[i,1]) * exposure_sims[i,6] * exposure_sims[i,3])/bw_sim[,i]
+  my_list[[i]]<-dermal_dose
+}
+my_list[458] #check the list outputs
 derm<-as.data.frame(t(do.call(rbind.data.frame, my_list)))
 colnames(derm)<-paste0("dermdose",1:nsims,"")
 row.names(derm)<-NULL
 #outputs are in ugg
+
 
 # format the dermal dose estimates and survival estimates to use in the BBMD app
 # should be in order with effects, so that each experiment N matches with each study
@@ -118,13 +107,13 @@ mort_n<-as.data.frame(sapply(survival_sim, function(x) effects$N_Exp - round(x*e
 rep.col<-function(x,n){
   matrix(rep(x,each=n), ncol=n, byrow=TRUE)
 }
-exp_n<-as.data.frame(rep.col(effects$N_Exp,100))
+exp_n<-as.data.frame(rep.col(effects$N_Exp,nsims))
 colnames(exp_n)<-paste0("exp_n",1:nsims,"")
 #need ID, dose, N, and mortality
 #for 100 sets of 39 rows
-exp_n<-gather(exp_n,"set","N",1:100)
-mort_n<-gather(mort_n,"set","Effect", 1:100)
-derm_dose<-gather(derm,"set","Dose",1:100)
+exp_n<-gather(exp_n,"set","N",1:nsims)
+mort_n<-gather(mort_n,"set","Effect", 1:nsims)
+derm_dose<-gather(derm,"set","Dose",1:nsims)
 
 BBMD_Run1<-cbind(exp_n,mort_n,derm_dose)
 BBMD_Run1<-BBMD_Run1[,c(1,6,2,4)]
@@ -133,10 +122,18 @@ BBMD_Run1<-BBMD_Run1[,c(1,6,2,4)]
 BBMD_Run1<-BBMD_Run1 %>%
   group_by(set) %>% #set of sims
   arrange(Dose, .by_group=T) #this will rearrange the output in terms of order of sims, but will still work fine
-write.csv(BBMD_Run1,"BBMD_Run1.csv")
+#we need to split up the 1000 set simulation into 10 sets of 100
+bbmd<-split(BBMD_Run1, (as.numeric(rownames(BBMD_Run1))-1) %/% 3900)
+lapply(bbmd,dim)
+test<-bbmd
+testy<-test[[3]] #check that it's formatted with 100 sets of unique sims
+unique(testy$set) #should be 100
+colnames<-c("Dataset Index", "Dose", "N","Effect")
+bbmd<-lapply(bbmd, setNames, colnames)
+for(i in names(bbmd)){
+  write.csv(bbmd[[i]], paste0(i,"bbmdrun.csv"), row.names=FALSE)
+}
 
-#test against format for original dataset
-#effects$N_dead<-effects$N_Exp-round(effects$adj_sur_96*effects$N_Exp,0)
 
 save.image(file='myEnvironment.RData')
 
@@ -453,15 +450,16 @@ dt<-param[1,2]
 move_rate<-param[3,2]
 hl<-4.91*24 #from comptox profile
 bioavail<-param[5,2]
-dsa<-param[9,2]*effects$M_Body_Weight_g^param[9,2] 
+dsa<-param[9,2]*effectsx$M_Body_Weight_g^param[9,2] 
 derm_frac<-param[11,2]
-soil_concs_deg<-log(2)/hl*96/move_rate
-soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm 
+soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
+soil_concs<-((effectsx$Application_Rate*10)/16000)*1000 #1cm 
 
 #this calculates dermal dose 
-dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effects$M_Body_Weight_g
+dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effectsx$M_Body_Weight_g
 head(dermal_dose) #take a look
-effects$dermaldose<-dermal_dose
+effectsx$dermaldose<-dermal_dose
+
 
 fm1<-lm(adj_sur_96 ~ dermaldose, data = effects)
 summary(fm1)
@@ -614,3 +612,27 @@ ggplot(effects, aes(x=Application_Rate, y=Survival, group=Study)) +
 #library(fitdistrplus)
 #library(drc)
 #library(purrr)
+
+#calculate dsa 
+# dsa<-list()
+# for (j in 2:ncol(bw_sim)){
+#   for (i in 1:nrow(exposure_sims)){
+#     dsa[[j]]<-exposure_sims[i,5]*bw_sim[,j]^exposure_sims[i,5]
+#   }}
+# dsa[[3]]
+# 
+# my_list<-list()
+# lapply(2:ncol(bw_sim), function(j) 
+#   lapply(1:nrow(exposure_sims), function(i) 
+#     lapply(1:nrow(soil_concs_degs), function(t) 
+#       my_list[[j]]<-(soil_concs^soil_concs_degs[t,] * kp_pyra * ((exposure_sims[i,5]*bw_sim[,j]^exposure_sims[i,5])/exposure_sims[i,1]) * exposure_sims[i,6] * exposure_sims[i,3])/bw_sim[,j]
+#     )))
+# my_list<-list()
+# for (j in 2:ncol(bw_sim)){
+#   for (i in 1:nrow(exposure_sims)){
+#     for (t in 1:nrow(soil_concs_degs)){
+#       dsa<-exposure_sims[i,5]*bw_sim[,j]^exposure_sims[i,5]
+#       dermal_dose<-(soil_concs^soil_concs_degs[t,] * kp_pyra * (dsa/exposure_sims[i,1]) * exposure_sims[i,6] * exposure_sims[i,3])/bw_sim[,j]
+#       my_list[[j]]<-dermal_dose
+#     }}}
+
