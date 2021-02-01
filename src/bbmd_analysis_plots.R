@@ -16,7 +16,7 @@ mydir = "csv"
 modsbmr = list.files(path=mydir, pattern="*bmrs.csv", full.names=TRUE)
 modsbmr<- plyr::ldply(modsbmr, read_csv)
 modsbmr<-modsbmr[!(modsbmr$posterior_weight==1 ),]
-#colnames(modsbmr)[4]<-"Model"
+colnames(modsbmr)[4]<-"Model"
 
 ggplot(modsbmr, aes(x = posterior_weight, y = Model, group = Model, fill = Model)) +
   geom_density_ridges(stat = "binline", bins = 100, scale = 1.5) +
@@ -70,7 +70,7 @@ modsp = list.files(path=mydir, pattern="*models.csv", full.names=TRUE)
 modsp <- plyr::ldply(modsp, read_csv)
 #determine top model by median
 modsbmr %>%
-  group_by(model) %>% 
+  group_by(Model) %>% 
   summarize(med=median(posterior_weight))
 #choose 3 models that are above threshold of 0.1 or greater
 
@@ -81,8 +81,8 @@ mods3<-filter(modsp, grepl('LogProbit|QuantalLinear|DichotomousHill', model))
 #get 89% credible interval
 #median
 
-max(derm_dose$Dose) #sequence from 0 to 1.4 by x, 1000 length
-derm_seq <-as.data.frame(seq(0,1.4,length.out = 1000))
+#max(derm_dose$Dose) #sequence from 0 to 1.4 by x, 1000 length
+derm_seq <-as.data.frame(seq(0,1.4, length=1000))
 colnames(derm_seq)[1]<-'dermdose'
 
 ####QuantalLinear
@@ -110,9 +110,9 @@ for (i in 1:length(QL_CI)){
 }
 QL_CI_high<-as.data.frame(CI_high)
 QL_CI_low<-as.data.frame(CI_low)
-QL<-cbind(QL_med_vals,QL_CI_high,QL_CI_low)
-colnames(QL)<-c('Median','CI_2.5','CI_97.5')
-QL_s<-tidyr::gather(QL,"Curve","mortality",1:ncol(QL))
+QL_f<-cbind(QL_med_vals,QL_CI_low,QL_CI_high)
+colnames(QL_f)<-c('Median','CI_2.5','CI_97.5')
+QL_s<-tidyr::gather(QL_f,"Curve","mortality",1:ncol(QL_f))
 QL_s<-cbind(QL_s,derm_seq)
 
 ggplot(QL_s, aes(dermdose, mortality, group = Curve)) +
@@ -149,8 +149,6 @@ for (i in 1:nrow(DH)){
 
 t1<-a*g +((a-(a*g))/(1+en^(-c*-b*log(derm_seq))))
 
-
-
 a<-DH[1,2]
 b<-DH[1,3]
 c<-DH[1,4]
@@ -158,7 +156,6 @@ g<-DH[1,5]
 
 
 t1<-(DH[1,2] * DH[1,5]) + ((DH[1,2]-(DH[1,2] * DH[1,5]))/(1+en^((-DH[1,4])*(-DH[1,3])*log(derm_seq))))
-
 t1<-DH[1,2] * DH[1,5] + ((DH[1,2]-(DH[1,2] * DH[1,5]))/1+en^((-DH[1,4])*(-DH[1,3])*log(derm_seq)))
 
 
@@ -173,18 +170,6 @@ max(DH_s_ft$mortality)
 ggplot(DH_s_ft, aes(dermdose, mortality, colour = mortality)) + geom_line()
 
 
-
-ci_func <- function(x) sapply(x, ci)
-mtcars  %>% filter(mpg > 20) %>%  myFunc()
-sapply(data,ci,ci=0.95)
-
-
-posterior <- distribution_normal(1000)
-
-# Compute HDI and ETI
-ci_hdi <- ci(posterior, method = "HDI")
-ci_eti <- ci(posterior, method = "ETI")
-#because these methods give the same for normal distribution, we can choose one or another. also pull out median
 
 
 ####Scraps ----

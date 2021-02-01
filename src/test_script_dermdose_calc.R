@@ -8,6 +8,7 @@ load('myEnvironment.RData')
 effects<-read.csv('data_in/Headline_updated.csv')
 param<-read.csv('data_in/parameters.csv')
 nsims<-1000
+set.seed(6379)
 
 #Body weight ----
 #desired output is 100 simulations of distributions of bw for every combo of study*species*dose
@@ -28,7 +29,7 @@ effects<-as.data.frame(effects)
 #we will be treating each simulated batch of dose-response as its own set of individual records
 #because we have accounted for variability in the simulated BWs
 
-zero_r<-effects[1,] #pull out single 0 dose; will function as our threshold
+zero_r<-effects[5,] #pull out single 0 dose; will function as our threshold
 effects<-effects[effects$Application_Rate != 0, ]  
 effects<-rbind(effects,zero_r)
 effects <-effects[order(effects$Study),]
@@ -93,7 +94,7 @@ for (i in 1:nsims){
   dermal_dose<-(soil_concs^soil_concs_degs[i,] * kp_pyra * (dsa/exposure_sims[i,1]) * exposure_sims[i,6] * exposure_sims[i,3])/bw_sim[,i]
   my_list[[i]]<-dermal_dose
 }
-my_list[458] #check the list outputs
+my_list[3] #check the list outputs
 derm<-as.data.frame(t(do.call(rbind.data.frame, my_list)))
 colnames(derm)<-paste0("dermdose",1:nsims,"")
 row.names(derm)<-NULL
@@ -133,7 +134,6 @@ bbmd<-lapply(bbmd, setNames, colnames)
 for(i in names(bbmd)){
   write.csv(bbmd[[i]], paste0(i,"bbmdrun.csv"), row.names=FALSE)
 }
-
 
 save.image(file='myEnvironment.RData')
 
