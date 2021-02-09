@@ -8,7 +8,7 @@ set.seed(25395) #match seed to BBMD for comparison
 
 #BBMDS using ToxicR - upload csv of runs ----
 #current iteration is the non-zero mortality at zero dose
-sims<-read.csv('BMDS_test_run.csv')
+sims<-read.csv('data_in/BMDS_test_run.csv')
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
