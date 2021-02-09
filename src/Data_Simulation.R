@@ -4,6 +4,7 @@ library(dplyr)
 library(tidyr)
 
 #load('myEnvironment.RData')
+getwd()
 
 effects<-read.csv('data_in/Headline_updated.csv')
 param<-read.csv('data_in/parameters.csv')
@@ -119,12 +120,11 @@ lapply(bbmd,dim) #check dimensions of the output; should be 3900*4 for each set 
 
 colnames<-c("Dataset Index", "Dose", "N","Effect")
 bbmd<-lapply(bbmd, setNames, colnames)
+
 for(i in names(bbmd)){
-  write.csv(bbmd[[i]], paste0(i,"data_out/bbmdrun.csv"), row.names=FALSE)
+  write.csv(bbmd[[i]], paste0(i,"bbmdrun.csv"), row.names=FALSE)
 }
 
-
 save.image(file='myEnvironment.RData') 
-write.csv(BBMD_Run2,'BBMD_Run2.csv') #save whole file for bmds analysis
- 
+write.csv(BBMD_Run2,'data_out/BBMD_Run2.csv') #save whole file for bmds analysis
 
