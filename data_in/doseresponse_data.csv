@@ -1,0 +1,48 @@
+,Study,Stage,Study_Type,Pesticide,Species,Duration_h,Method,Application_Rate,Unit,Survival,M_Body_Weight_g,SD,Body_Length_mm,ExposedSkin_cm2,N_Rep,Rep,N_Exp,N_Total,half_life,adj_sur_96,dermaldose,N_s
+1,Belden_2010,Juvenile,Lab,Pyraclostrobin_Headline,Anaxyrus cognatus,72,Overspray,0,ug a.i./cm2,0.96,1.06,0.053,22,2.53,10,3,30,NA,1222.541857,0.947,0,28
+2,Belden_2010,Juvenile,Lab,Pyraclostrobin_Headline,Anaxyrus cognatus,72,Overspray,0.22,ug a.i./cm2,0.93,1.06,0.053,22,2.53,10,3,30,NA,687.6963007,0.908,0.636207663,27
+3,Belden_2010,Juvenile,Lab,Pyraclostrobin_Headline,Anaxyrus cognatus,72,Overspray,2.2,ug a.i./cm2,0.34,1.06,0.053,22,2.53,10,3,30,NA,46.26079909,0.237,0.695610335,7
+4,Belden_2010,Juvenile,Lab,Pyraclostrobin_Headline,Anaxyrus cognatus,72,Overspray,22,ug a.i./cm2,0,1.06,0.053,22,2.53,10,3,30,117.9,0,0,0.760559432,0
+45,Bruhl_2013,Juvenile,Lab,Pyraclostrobin_Headline,Rana temporaria ,168,Overspray,0,ug a.i./cm2,0.93,0.96,0.25,21,2.31,10,4,40,NA,1604.624702,0.959,0,38
+46,Bruhl_2013,Juvenile,Lab,Pyraclostrobin_Headline,Rana temporaria ,168,Overspray,0.22,ug a.i./cm2,1,0.84,0.19,21,2.31,5,1,5,NA,Inf,1,0.697416281,5
+47,Bruhl_2013,Juvenile,Lab,Pyraclostrobin_Headline,Rana temporaria ,168,Overspray,2.2,ug a.i./cm2,0,1.02,0.25,21,2.31,3,1,3,48,0,0,0.706256957,0
+39,Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii ,48,Overspray,0,ug a.i./cm2,1,0.45,0.034,NA,NA,NA,NA,75,NA,Inf,1,0,75
+40,Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,48,Overspray,0,ug a.i./cm2,0.93,0.49,0.025,NA,NA,NA,NA,42,NA,458.4642005,0.865,0,36
+41,Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii ,48,Overspray,1.06,ug a.i./cm2,1,0.45,0.034,NA,NA,NA,NA,73,NA,Inf,1,0.94842685,73
+42,Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,48,Overspray,1.06,ug a.i./cm2,0.93,0.49,0.025,NA,NA,NA,NA,17,NA,458.4642005,0.865,0.91706441,15
+43,Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii ,48,Overspray,1.52,ug a.i./cm2,1,0.45,0.034,NA,NA,NA,NA,71,NA,Inf,1,0.961772508,71
+44,Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,48,Overspray,1.52,ug a.i./cm2,0.97,0.49,0.025,NA,NA,NA,NA,36,NA,1092.315507,0.941,0.929968755,34
+5,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_Headline,Acris blanchardi,96,Overspray,0,ug a.i./cm2,1,0.49,0.025,19.4,1.97,10,3,30,NA,Inf,1,0,30
+6,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_Headline,Acris blanchardi,96,Overspray,0.55,ug a.i./cm2,0.96,0.49,0.025,19.4,1.97,10,3,30,NA,1630.05581,0.96,0.894032713,29
+7,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_Headline,Acris blanchardi,96,Overspray,1.1,ug a.i./cm2,0.92,0.49,0.025,19.4,1.97,10,3,30,NA,798.0432398,0.92,0.918382245,28
+8,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_Headline,Acris blanchardi,96,Overspray,2.2,ug a.i./cm2,0.52,0.49,0.025,19.4,1.97,10,3,30,NA,101.7578163,0.52,0.943394952,16
+9,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_Headline,Acris blanchardi,96,Overspray,4.4,ug a.i./cm2,0.1,0.49,0.025,19.4,1.97,10,3,30,NA,28.89887958,0.1,0.969088896,3
+10,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_Headline,Acris blanchardi,96,Overspray,8.8,ug a.i./cm2,0.04,0.49,0.025,19.4,1.97,10,3,30,NA,20.67247479,0.04,0.995482629,1
+11,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_AMP,Acris blanchardi,96,Overspray,0,ug a.i./cm2,0.93,0.49,0.025,19.4,1.97,10,3,30,NA,916.9284009,0.93,0,28
+12,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_AMP,Acris blanchardi,96,Overspray,0.38,ug a.i./cm2,0.8,0.49,0.025,19.4,1.97,10,3,30,NA,298.2032371,0.8,0.881309029,24
+13,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_AMP,Acris blanchardi,96,Overspray,0.76,ug a.i./cm2,0.86,0.49,0.025,19.4,1.97,10,3,30,NA,441.1938364,0.86,0.905312024,26
+14,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_AMP,Acris blanchardi,96,Overspray,1.52,ug a.i./cm2,0.7,0.49,0.025,19.4,1.97,10,3,30,NA,186.5623881,0.7,0.929968755,21
+15,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_AMP,Acris blanchardi,96,Overspray,3.04,ug a.i./cm2,0.5,0.49,0.025,19.4,1.97,10,3,30,NA,96,0.5,0.955297028,15
+16,Cusaac_2016,Juvenile_Adult,Lab,Pyraclostrobin_AMP,Acris blanchardi,96,Overspray,6.08,ug a.i./cm2,0.04,0.49,0.025,19.4,1.97,10,3,30,360,20.67247479,0.04,0.981315132,1
+17,Cusaac_2017,Adult,Lab,Pyraclostrobin_Headline,Anaxyrus cognatus,96,Overspray,2.2,ug a.i./cm2,1,0.64,0.03,83,NA,2,1,2,NA,Inf,1,0.848973328,2
+18,Cusaac_2017,Adult,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,1.52,ug a.i./cm3,1,0.64,0.03,83,NA,1,1,1,NA,Inf,1,0.836890919,1
+19,Cusaac_2017,Adult,Lab,Pyraclostrobin_Headline,Anaxyrus cognatus,96,Overspray,11,ug a.i./cm2,0.75,0.64,0.03,83,NA,4,1,4,NA,231.3044006,0.75,0.903630971,3
+20,Cusaac_2017,Adult,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,7.6,ug a.i./cm2,1,0.64,0.03,83,NA,3,1,3,NA,Inf,1,0.890770686,3
+21,Cusaac_2017,Adult,Lab,Pyraclostrobin_Headline,Anaxyrus woodhousii ,96,Overspray,2.2,ug a.i./cm2,0.5,0.45,0.034,77,NA,2,1,2,NA,96,0.5,0.975657864,1
+22,Cusaac_2017,Adult,Lab,Pyraclostrobin_AMP,Anaxyrus woodhousii ,96,Overspray,1.52,ug a.i./cm3,1,0.45,0.034,77,NA,2,1,2,NA,Inf,1,0.961772508,2
+23,Cusaac_2017,Adult,Lab,Pyraclostrobin_Headline,Anaxyrus woodhousii ,96,Overspray,11,ug a.i./cm2,1,0.45,0.034,77,NA,4,1,4,NA,Inf,1,1.038471568,4
+24,Cusaac_2017,Adult,Lab,Pyraclostrobin_AMP,Anaxyrus woodhousii ,96,Overspray,7.6,ug a.i./cm2,1,0.45,0.034,77,NA,4,1,4,22,Inf,1,1.023692261,4
+25,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,0,ug a.i./cm2,0.9,0.85,0.053,20.7,2.24,10,3,30,NA,631.566094,0.9,0,27
+26,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,0.38,ug a.i./cm2,0.93,0.85,0.053,20.7,2.24,10,3,30,NA,916.9284009,0.93,0.709029577,28
+27,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,0.76,ug a.i./cm2,0.93,0.85,0.053,20.7,2.24,10,3,30,NA,916.9284009,0.93,0.728340435,28
+28,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,1.52,ug a.i./cm2,0.7,0.85,0.053,20.7,2.24,10,3,30,NA,186.5623881,0.7,0.748177236,21
+29,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,3.04,ug a.i./cm2,0.4,0.85,0.053,20.7,2.24,10,3,30,NA,72.62119655,0.4,0.768554304,12
+30,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Overspray,6.08,ug a.i./cm2,0.17,0.85,0.053,20.7,2.24,10,3,30,180,37.55290635,0.17,0.789486355,5
+31,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil _Tx,0,ug a.i./cm2,0.93,0.79,0.075,NA,NA,10,3,30,NA,916.9284009,0.93,0,28
+32,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil _Tx,1.52,ug a.i./cm2,0.95,0.79,0.075,NA,NA,10,3,30,NA,1297.287104,0.95,0.770119978,28
+33,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil _Tx,3.04,ug a.i./cm2,0.4,0.79,0.075,NA,NA,10,3,30,NA,72.62119655,0.4,0.791094671,12
+34,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil _Tx,6.08,ug a.i./cm2,0.32,0.79,0.075,NA,NA,10,3,30,NA,58.39926911,0.32,0.812640622,10
+35,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil_Nb,0,ug a.i./cm2,0.96,0.79,0.075,NA,NA,10,3,30,NA,1630.05581,0.96,0,29
+36,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil_Nb,1.52,ug a.i./cm2,0.84,0.79,0.075,NA,NA,10,3,30,NA,381.6509127,0.84,0.770119978,25
+37,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil_Nb,3.04,ug a.i./cm2,0.56,0.79,0.075,NA,NA,10,3,30,NA,114.7637233,0.56,0.791094671,17
+38,Cusaac_2017,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,96,Soil_Nb,6.08,ug a.i./cm2,0.3,0.79,0.075,NA,NA,10,3,30,240,55.26879768,0.3,0.812640622,9
