@@ -3,7 +3,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 getwd()
-#load('myEnvironment.RData')
+load('myEnvironment.RData')
 
 effects<-read.csv('data_in/Headline_updated.csv')
 param<-read.csv('data_in/parameters.csv')
@@ -120,7 +120,7 @@ lapply(bbmd,dim) #check dimensions of the output; should be 3900*4 for each set 
 colnames<-c("Dataset Index", "Dose", "N","Effect")
 bbmd<-lapply(bbmd, setNames, colnames)
 for(i in names(bbmd)){
-  write.csv(bbmd[[i]], paste0(i,"data_out/bbmdrun.csv"), row.names=FALSE)
+  write.csv(bbmd[[i]], paste0(i,"data_out/simulation/bbmdrun.csv"), row.names=FALSE)
 }
 
 save.image(file='myEnvironment.RData') 
