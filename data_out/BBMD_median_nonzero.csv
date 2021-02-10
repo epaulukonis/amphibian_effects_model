@@ -1,0 +1,10 @@
+"","model","med"
+"1","DichotomousHill",0.189441703670822
+"2","Logistic",0.019023986565173
+"3","LogLogistic",0.0099697755480425
+"4","LogProbit",0.247346156
+"5","Model average",1
+"6","Multistage2",0.0146584027552675
+"7","Probit",0.023661187524589
+"8","QuantalLinear",0.148615822210862
+"9","Weibull",0.008343873946932
