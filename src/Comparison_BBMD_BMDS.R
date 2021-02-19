@@ -11,6 +11,7 @@ library(ToxicR)
 library(nlme)
 library(ggridges)
 library(dplyr)
+load('myEnvironment_comparison.RData')
 
 ##this script contains code to compare the BMDS ToxicR package for MCMC dose response analysis and the BBMD dose response analysis app
 
@@ -22,7 +23,7 @@ set.seed(31443) #match seed to BBMD for comparison - this for zero mort
 #current iteration is batch 2, the zero mortality at zero dose
 
 ###BMDS ----
-sims<-read.csv('data_in/BMDS_test_run_2.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+sims<-read.csv('data_in/BMDS_test_run.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
@@ -30,6 +31,8 @@ post<-lapply(mcmc_ma, function (x) x['posterior_probs']) #pull out posterior pro
 postw<-as.data.frame(unlist(post))
 postw<-tibble::rownames_to_column(postw, "Simulation")
 postw$Simulation = substr(postw$Simulation,1,nchar(postw$Simulation)-1) #remove extraneous characters
+
+plot(mcmc_ma)
 
 mcmc_ma[1]
 #plot BMDS posterior probs from the model average
@@ -146,3 +149,5 @@ ggplot(bbmd_est, aes(x=bmd, group=model)) +
   ylab('Density')+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(size = 12))
+
+save.image(file='myEnvironment_comparison.RData') 
