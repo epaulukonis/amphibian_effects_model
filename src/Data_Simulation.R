@@ -15,13 +15,6 @@ effects<-effects %>%
   group_by(Application_Rate)%>% #application rate
   mutate(SE = SD/sqrt(length(effects))) #mutate to add standard error to account for variability between studies
 effects<-as.data.frame(effects)
-
-
-str(effects)
-#N_exp is int
-#adj_sur_96 is num
-
-
 controls<-effects[effects$Application_Rate == 0, ]  #take out all controls
 control<-effects[5,] # take out single row which will contain final control
 #function for weighted mean
