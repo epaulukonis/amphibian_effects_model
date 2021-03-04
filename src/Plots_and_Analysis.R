@@ -1,4 +1,13 @@
 #create plots for Paulukonis et al. 2021
+library(Rcpp)
+library(RcppGSL)
+library(RcppEigen)
+library(forcats)
+library(plotly)
+library(shiny)
+library(scales)
+library(ToxicR)
+library(nlme)
 library(ggplot2)
 library(ggridges)
 library(readr)
@@ -12,8 +21,8 @@ load('myEnvironment_analysis.RData')
 #all plots here are part of the manuscript
 #some of the script will be similar to the comparison plots found in 'Comparison_BBMD_BMDS.R'
 
-####Analysis----\
-sims<-read.csv('data_out/BMDS_run3.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+####Analysis----
+sims<-read.csv('data_out/BMDS_run4.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
@@ -25,16 +34,13 @@ postw$Simulation = substr(postw$Simulation,1,nchar(postw$Simulation)-1) #remove 
 colnames(postw)[2]<-'PosteriorProbs'
 mod_list_f<-rep(mod_list, times=1000)
 postw$Model<-mod_list_f #add column for model
-write.csv(postw, 'data_out/PosteriorWeights.csv')
+#write.csv(postw, 'data_out/PosteriorWeights.csv')
 
-#pull out 3 models to look at bmds
+#look at median of PW across all models 
 tab_med<-postw %>%
   group_by(Model) %>% 
   summarize(med=median(PosteriorProbs))
-#probit
-#log-logistic
-#qlinear
-write.csv(tab_med,'data_out/BMDS_posteriorweight_median.csv')
+write.csv(tab_med,'data_out/BMDS_posteriorweight_median)run4.csv')
 
 #pull model average BMD, bmdl, bmdu
 bmdsorder<-c('bmds','bmdl','bmdu')
@@ -49,28 +55,40 @@ bmds$Model<-'ModelAverage'
 
 
 #run mcmc over top 3 models
-mcmc_ll<- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "log-logistic",fit_type = "mcmc"))
-mcmc_p <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "probit",fit_type = "mcmc"))
+mcmc_g<- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "gamma",fit_type = "mcmc"))
+mcmc_lp <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "log-probit",fit_type = "mcmc"))
 mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "qlinear",fit_type = "mcmc"))
 
+
+#try plotting with built-in plot function
+# out_mcmc_result<-mcmc_ll$exp_n1$mcmc_result
+# out_mcmc_fittedmodel<-mcmc_ll$exp_n1$fitted_model
+# out_mcmc_prior <-mcmc_ll$exp_n1$prior
+# out_bmd_samples<-as.data.frame(mcmc_ll$exp_n1$mcmc_result$BMD_samples)
+# plot(mcmc_ll$exp_n1)
+# df<-mcmc_ll$exp_n1
+# plot(test$V1~test$V2) #doesn't seem to be original plot; goes above 0.5 (plotly plot doesn't)
+# plot(mcmc_ma$exp_n1)
+# plot(mcmc_ma$exp_n1$Individual_Model_8)
+
 #organize and put outputs in dataframe
-ll<-lapply(mcmc_ll, function (x) x['bmd'])
+ll<-lapply(mcmc_g, function (x) x['bmd'])
 ll<-as.data.frame(unlist(ll))
 ll<-tibble::rownames_to_column(ll, "Simulation")
 ll$Simulation = substr(ll$Simulation,1,nchar(ll$Simulation)-1)
 colnames(ll)[2]<-'BMDSEstimates'
 ll$order<-bmds_order
-ll$Model<-'Log-Logistic'
+ll$Model<-'Gamma'
 
-p<-lapply(mcmc_p, function (x) x['bmd'])
+p<-lapply(mcmc_lp, function (x) x['bmd'])
 p<-as.data.frame(unlist(p))
 p<-tibble::rownames_to_column(p, "Simulation")
 p$Simulation = substr(p$Simulation,1,nchar(p$Simulation)-1)
 colnames(p)[2]<-'BMDSEstimates'
 p$order<-bmds_order
-p$Model<-'Probit'
+p$Model<-'Log-Probit'
 
-q<-lapply(mcmc_p, function (x) x['bmd'])
+q<-lapply(mcmc_q, function (x) x['bmd'])
 q<-as.data.frame(unlist(q))
 q<-tibble::rownames_to_column(q, "Simulation")
 q$Simulation = substr(q$Simulation,1,nchar(q$Simulation)-1)
@@ -79,7 +97,7 @@ q$order<-bmds_order
 q$Model<-'QuantalLinear'
 
 bmds_est<-rbind(bmds,ll,p,q)
-write.csv(bmds_est,'data_out/BMDS_bmdsbmdlbmdu_top3.csv')
+#write.csv(bmds_est,'data_out/BMDS_bmdsbmdlbmdu_top3.csv')
 
 save.image(file='myEnvironment_analysis.RData') 
 
@@ -91,15 +109,8 @@ save.image(file='myEnvironment_analysis.RData')
 # Figure 4: DR curve for top 3 models and 95% credibility interval + median, plotted with original dataset
 
 
-
-#Figure 2 - plot of posterior probability - BMDS
-mydir = "C:/Users/epauluko/Dropbox/amphib_modeling_manuscript/manuscript_pop_modeling_OLD/amphibian_effects_model/data_in/csv"
-modsbmr = list.files(path=mydir, pattern="*bmrs.csv", full.names=TRUE)
-modsbmr<- plyr::ldply(modsbmr, read_csv)
-modsbmr<-modsbmr[!(modsbmr$posterior_weight==1 ),]
-colnames(modsbmr)[4]<-"Model"
-
-ggplot(modsbmr, aes(x = posterior_weight, y = Model, group = Model, fill = Model)) +
+#Figure 2 - plot of posterior probability weights across 9 models 
+ggplot(postw, aes(x = PosteriorProbs, y = Model, group = Model, fill = Model)) +
   geom_density_ridges(stat = "binline", bins = 100, scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
@@ -108,20 +119,23 @@ ggplot(modsbmr, aes(x = posterior_weight, y = Model, group = Model, fill = Model
   xlab("Posterior Probability by Model for 1000 Simulated Studies")+
   theme_ridges()
 
-#choose 3 models that are above threshold of 0.1 or greater
-modsp = list.files(path=mydir, pattern="*models.csv", full.names=TRUE) #filter csv with posterior values
-modsp <- plyr::ldply(modsp, read_csv)
-modsbmr %>%
-  group_by(Model) %>% 
-  summarize(med=median(posterior_weight)) #returns median value of posterior weights across 1000 sets
-mods3<-filter(modsp, grepl('LogProbit|QuantalLinear|DichotomousHill', model)) #pull out top 3 models
-
 
 #Figure 3 - KDE of benchmark doses 
-#all models 
+ggplot(bmds_est, aes(y = Model)) +
+  geom_density_ridges(aes(x=BMDSEstimates, fill = order), 
+                      stat = "binline", bins = 100, scale = 0.9,
+                      alpha = .6, ) +
+  scale_y_discrete(expand = c(0, 0)) +
+  scale_x_continuous(limits = c(-0.5,1), expand = c(0, 0)) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = "Fitted BMD with Upper (BMDU) and Lower (BMDL) Estimates",
+    y = "Model",
+    title = "Benchmark Dose (BMD) Estimates by Model" ) +
+  theme_ridges()
 
-#top 3 
-ggplot(bmds_est, aes(x=BMDSEstimates, group=Model)) + 
+#jsut for bmds
+ggplot(bmds, aes(x=BMDSEstimates, group=Model)) + 
   geom_density(aes(fill=Model), alpha=0.2)+
   scale_fill_manual(values=c("#E69F00", "#D55E00", "#56B4E9", "#009E73"))+
   xlim(-2.5, 1)+
@@ -131,9 +145,11 @@ ggplot(bmds_est, aes(x=BMDSEstimates, group=Model)) +
         panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(size = 12))
 
 
-
-#Figure 4 - plot confidence interval and median of 3 models, overlay original dataset on top
-#simulate some doses
+#Figure 4 - we need to pull out the individual DR plots for the top models?
+mcmc_ma$exp_n1$
+plot(mcmc_ma$exp_n1)
+plot(mcmc_q$exp_n1)
+plot(mcmc_ma$exp_n1$Individual_Model_8)
 derm_seq <-as.data.frame(seq(0,1.4, length=1000))  #sequence from 0 to 1.4 by x, 1000 length
 colnames(derm_seq)[1]<-'dermdose'
 
