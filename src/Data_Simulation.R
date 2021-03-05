@@ -7,6 +7,7 @@ library(DescTools)
 library(reshape2)
 
 #load('myEnvironment_simulation.RData')
+#note to self; specific column numbers will change depending on dataset
 effects<-read.csv('data_in/Glyphosate_updated.csv')
 param<-read.csv('data_in/parameters.csv') #go back and take weighted mean; sum alive / sum assessed 
 nsims<-1000
