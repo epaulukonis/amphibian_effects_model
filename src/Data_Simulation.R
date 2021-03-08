@@ -66,7 +66,7 @@ effects<-effects %>%
 effects<-as.data.frame(effects)
 effects<-na.omit(effects)
 controls<-effects[effects$Application_Rate == 0, ]  #take out all controls
-control<-effects[5,] # take out single row which will contain final control
+control<-effects[1,] # take out single row which will contain final control
 #function for weighted mean
 weight_mean<-function(data,vector,weight){
   round(with(data, sum(vector*weight)/sum(weight)),2)
@@ -75,8 +75,8 @@ control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survi
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[effects$Application_Rate != 0, ]
 effects<-rbind(effects,control)
-effects <-effects[order(effects$Study),]
-names(effects)
+#effects <-effects[order(effects$Study),]
+
 
 ##let's bootstrap some data based on our original dataset
 #Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
