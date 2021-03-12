@@ -128,7 +128,7 @@ hl<-4.46*24 #from comptox profile
 
 #calculate soil concentrations; application rate will remain the same, the exponent value changes with exposure parameter simulations
 soil_concs_degs<-as.data.frame(log(2)/hl*96/exposure_sims$movement_rate_mean) #use 96 as duration, as we adjusted all survivals for a 96h timeframe
-soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm depth #converts it into units of ugg #this comes from Weir
+soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm depth #converts it into final units of ug/g (tissue conc/bw)#this comes from Weir
 my_list<-list()
 for (i in 1:nsims){
   dsa<-exposure_sims[i,5]*bw_sim[,i]^exposure_sims[i,5]

@@ -27,6 +27,19 @@ by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
 
+
+##firt nested level of function output
+mcmc_ma$exp_n1$ma_bmd
+#ma_bmd -  cdf of the BMD? first used to calculate the CL of the bmd 
+mcmc_ma$exp_n1$bmd
+#median bmd, bmdl, bmdu
+mcmc_ma$exp_n1$posterior_probs
+#prob weights for all models
+
+##second nested level of function output
+mcmc_ma$exp_n1$Individual_Model_1$mcmc_result #30,000 rows of param samples 
+
+  
 post<-lapply(mcmc_ma, function (x) x['posterior_probs']) #pull out posterior probabilities 
 postw<-as.data.frame(unlist(post))
 postw<-tibble::rownames_to_column(postw, "Simulation")
