@@ -5,8 +5,8 @@ library(ggridges)
 library(cowplot)
 
 ##Script for comparison of field and lab-based tissue concentrations to estimated tissue-based concentrations
-lab_bb<-read.csv('data_in/lab_bb.csv') 
-field_bb<-read.csv('data_in/field_bb.csv') 
+lab_bb<-read.csv('data_in/lab_bb.csv')#should be 1158
+field_bb<-read.csv('data_in/field_bb.csv')  #should be 30611
 
 #pyraclostrobin has a relatively high soil sorption factor, i.e., the bioavailable fraction of pyra
 #rapidly decreases after soil contact -  however, water content in soil prolongs the period of potential soil exposure
@@ -75,8 +75,6 @@ mean(pyra_f$tissue)
 min(effects$dermaldose)
 
 
-
-
 unique(soils$Species)
 unique(spray$Species)
 unique(pyra_f$Species)
@@ -86,11 +84,9 @@ unique(pyra$Source)
 
 
 field<-ggplot(pyra_f, aes(y = Species)) +
-  geom_density_ridges(
-    aes(x=tissue,fill=paste(Species)),
-    scale = 1.5) +
+  geom_density_ridges(aes(x=tissue,fill=paste(Species)), stat = "binline", bins = 100, scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
-  scale_x_continuous(expand=c(0,0), limits=c(0,.25)) +
+  scale_x_continuous(expand=c(0,0), limits=c(-0.01,.25)) +
   coord_cartesian(clip = "off") +
   ylab("Species") +
   xlab("Tissue Concentration (ug/g)")+
@@ -99,9 +95,7 @@ field<-ggplot(pyra_f, aes(y = Species)) +
 field
 
 calc<-ggplot(effects, aes(y = Species)) +
-  geom_density_ridges(
-    aes(x=dermaldose,fill=paste(Species)),
-    scale = 1.5) +
+  geom_density_ridges(aes(x=dermaldose,fill=paste(Species)),stat = "binline", bins = 100,scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
   coord_cartesian(clip = "off") +

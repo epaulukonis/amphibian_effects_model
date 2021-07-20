@@ -22,7 +22,7 @@ setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profil
 #some of the script will be similar to the comparison plots found in 'Comparison_BBMD_BMDS.R'
 
 ####Analysis----
-sims<-read.csv('data_out/BMDS_glyphosate_fin.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+sims<-read.csv('data_out/BMDS_headline_fin_61421.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
