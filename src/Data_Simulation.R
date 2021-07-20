@@ -117,10 +117,10 @@ exposure_sims<-as.data.frame(exposure_sims)
 
 #pyraclostrobin
 #calculate dermal dosage 
-pmolweight<-387.8 #g/mol #comptox
-plogKow<- 4.44 #comptox
+pmolweight<-169.1 #g/mol #comptox
+plogKow<- -3.12 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
-hl<-4.91*24 #from comptox profile
+hl<-4.46*24 #from comptox profile
 
 #glyphosate
 #calculate dermal dosage 
