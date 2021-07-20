@@ -14,8 +14,8 @@ library(readr)
 library(bayestestR)
 library(dplyr)
 library(tidyverse)
-#setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/Paulukonis_Documents/manuscript_pop_modeling/amphibian_effects_model/amphibian_effects_model')
-load('myEnvironment_analysis.RData')
+setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
+#load('myEnvironment_analysis.RData')
 
 ##this script contains plot and data analysis for the BMDS MCMC outputs
 #all plots here are part of the manuscript
