@@ -22,11 +22,24 @@ setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profil
 #some of the script will be similar to the comparison plots found in 'Comparison_BBMD_BMDS.R'
 
 ####Analysis----
-sims<-read.csv('data_out/BMDS_run4.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+sims<-read.csv('data_out/BMDS_glyphosate_fin.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
 
+
+##firt nested level of function output
+mcmc_ma$exp_n1$ma_bmd
+#ma_bmd -  cdf of the BMD? first used to calculate the CL of the bmd 
+mcmc_ma$exp_n1$bmd
+#median bmd, bmdl, bmdu
+mcmc_ma$exp_n1$posterior_probs
+#prob weights for all models
+
+##second nested level of function output
+mcmc_ma$exp_n1$Individual_Model_1$mcmc_result #30,000 rows of param samples 
+
+  
 post<-lapply(mcmc_ma, function (x) x['posterior_probs']) #pull out posterior probabilities 
 postw<-as.data.frame(unlist(post))
 postw<-tibble::rownames_to_column(postw, "Simulation")
@@ -40,7 +53,7 @@ postw$Model<-mod_list_f #add column for model
 tab_med<-postw %>%
   group_by(Model) %>% 
   summarize(med=median(PosteriorProbs))
-write.csv(tab_med,'data_out/BMDS_posteriorweight_median)run4.csv')
+write.csv(tab_med,'data_out/BMDS_posteriorweight_median_run5.csv')
 
 #pull model average BMD, bmdl, bmdu
 bmdsorder<-c('bmds','bmdl','bmdu')
@@ -68,8 +81,9 @@ mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],mode
 # plot(mcmc_ll$exp_n1)
 # df<-mcmc_ll$exp_n1
 # plot(test$V1~test$V2) #doesn't seem to be original plot; goes above 0.5 (plotly plot doesn't)
-# plot(mcmc_ma$exp_n1)
-# plot(mcmc_ma$exp_n1$Individual_Model_8)
+plot(mcmc_ma$exp_n1)
+plot(mcmc_ma$exp_n1$Individual_Model_8)
+
 
 #organize and put outputs in dataframe
 ll<-lapply(mcmc_g, function (x) x['bmd'])
