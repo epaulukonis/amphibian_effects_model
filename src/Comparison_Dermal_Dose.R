@@ -84,7 +84,7 @@ unique(pyra$Source)
 
 
 field<-ggplot(pyra_f, aes(y = Species)) +
-  geom_density_ridges(aes(x=tissue,fill=paste(Species)), stat = "binline", bins = 100, scale = 1.5) +
+  geom_density_ridges(aes(x=tissue,fill=paste(Species)), stat = "binline", bins = 50, scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
   scale_x_continuous(expand=c(0,0), limits=c(-0.01,.25)) +
   coord_cartesian(clip = "off") +
@@ -95,17 +95,22 @@ field<-ggplot(pyra_f, aes(y = Species)) +
 field
 
 calc<-ggplot(effects, aes(y = Species)) +
-  geom_density_ridges(aes(x=dermaldose,fill=paste(Species)),stat = "binline", bins = 100,scale = 1.5) +
+  geom_density_ridges(aes(x=dermaldose,fill=paste(Species)),stat = "binline", bins = 50,scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
   ylab("Species") +
   xlab("Tissue Concentration (ug/g)")+
   guides(fill=guide_legend(title=""))+
+  # theme(axis.title.y = element_text( size=12, face="bold"), 
+  #       axis.title.x = element_text( size=12, face="bold"),
+  #       legend.title = element_text(size=14, face="bold"),
+  #       legend.text = element_text( size=12, face="bold"),
+  #       )+
   theme_ridges()
 calc
 
 
 
-plot_grid(field,calc, labels = c('Field Body Burdens', 'Calculated Body Burdens'), label_size = 12)
-
+plot_grid(field,calc)
+#plot_grid(field,calc, labels = c('Field Body Burdens', 'Calculated Body Burdens'), label_size = 12)
