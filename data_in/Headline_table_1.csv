@@ -1,48 +1,48 @@
-Study,Stage,Species,Duration,Method,Application Rate (ug a.i./cm2),Survival,Mean Body Weight (g),Weight SD
-Belden et al. 2010,Juvenile,Anaxyrus cognatus,72,Overspray,0,0.96,1.06,0.053
-Belden et al. 2011,Juvenile,Anaxyrus cognatus,72,Overspray,0.22,0.93,1.06,0.053
-Belden et al. 2012,Juvenile,Anaxyrus cognatus,72,Overspray,2.2,0.34,1.06,0.053
-Belden et al. 2013,Juvenile,Anaxyrus cognatus,72,Overspray,22,0,1.06,0.053
-Cusaac et al. 2016a,Juvenile/Adult,Acris blanchardi,96,Overspray,0,1,0.49,0.025
-Cusaac et al. 2016a,Juvenile/Adult,Acris blanchardi,96,Overspray,0.55,0.96,0.49,0.025
-Cusaac et al. 2016a,Juvenile/Adult,Acris blanchardi,96,Overspray,1.1,0.92,0.49,0.025
-Cusaac et al. 2016a,Juvenile/Adult,Acris blanchardi,96,Overspray,2.2,0.52,0.49,0.025
-Cusaac et al. 2016a,Juvenile/Adult,Acris blanchardi,96,Overspray,4.4,0.1,0.49,0.025
-Cusaac et al. 2016a,Juvenile/Adult,Acris blanchardi,96,Overspray,8.8,0.04,0.49,0.025
-Cusaac et al. 2016b,Juvenile/Adult,Acris blanchardi,96,Overspray,0,0.93,0.49,0.025
-Cusaac et al. 2016b,Juvenile/Adult,Acris blanchardi,96,Overspray,0.38,0.8,0.49,0.025
-Cusaac et al. 2016b,Juvenile/Adult,Acris blanchardi,96,Overspray,0.76,0.86,0.49,0.025
-Cusaac et al. 2016b,Juvenile/Adult,Acris blanchardi,96,Overspray,1.52,0.7,0.49,0.025
-Cusaac et al. 2016b,Juvenile/Adult,Acris blanchardi,96,Overspray,3.04,0.5,0.49,0.025
-Cusaac et al. 2016b,Juvenile/Adult,Acris blanchardi,96,Overspray,6.08,0.04,0.49,0.025
-Cusaac et al. 2017a,Adult,Anaxyrus cognatus,96,Overspray,1.52,1,0.64,0.03
-Cusaac et al. 2017a,Adult,Anaxyrus cognatus,96,Overspray,2.2,1,0.64,0.03
-Cusaac et al. 2017a,Adult,Anaxyrus cognatus,96,Overspray,7.6,1,0.64,0.03
-Cusaac et al. 2017a,Adult,Anaxyrus cognatus,96,Overspray,11,0.75,0.64,0.03
-Cusaac et al. 2017a,Adult,Anaxyrus woodhousii ,96,Overspray,1.52,1,0.45,0.034
-Cusaac et al. 2017a,Adult,Anaxyrus woodhousii ,96,Overspray,2.2,0.5,0.45,0.034
-Cusaac et al. 2017a,Adult,Anaxyrus woodhousii ,96,Overspray,7.6,1,0.45,0.034
-Cusaac et al. 2017a,Adult,Anaxyrus woodhousii ,96,Overspray,11,1,0.45,0.034
-Cusaac et al. 2017b,Juvenile,Anaxyrus cognatus,96,Overspray,0,0.9,0.85,0.053
-Cusaac et al. 2017b,Juvenile,Anaxyrus cognatus,96,Overspray,0.38,0.93,0.85,0.053
-Cusaac et al. 2017b,Juvenile,Anaxyrus cognatus,96,Overspray,0.76,0.93,0.85,0.053
-Cusaac et al. 2017b,Juvenile,Anaxyrus cognatus,96,Overspray,1.52,0.7,0.85,0.053
-Cusaac et al. 2017b,Juvenile,Anaxyrus cognatus,96,Overspray,3.04,0.4,0.85,0.053
-Cusaac et al. 2017b,Juvenile,Anaxyrus cognatus,96,Overspray,6.08,0.17,0.85,0.053
-Cusaac et al. 2017c,Juvenile,Anaxyrus cognatus,96,Soil _Tx,0,0.93,0.79,0.075
-Cusaac et al. 2017c,Juvenile,Anaxyrus cognatus,96,Soil _Tx,1.52,0.95,0.79,0.075
-Cusaac et al. 2017c,Juvenile,Anaxyrus cognatus,96,Soil _Tx,3.04,0.4,0.79,0.075
-Cusaac et al. 2017c,Juvenile,Anaxyrus cognatus,96,Soil _Tx,6.08,0.32,0.79,0.075
-Cusaac et al. 2017d,Juvenile,Anaxyrus cognatus,96,Soil_Nb,0,0.96,0.79,0.075
-Cusaac et al. 2017d,Juvenile,Anaxyrus cognatus,96,Soil_Nb,1.52,0.84,0.79,0.075
-Cusaac et al. 2017d,Juvenile,Anaxyrus cognatus,96,Soil_Nb,3.04,0.56,0.79,0.075
-Cusaac et al. 2017d,Juvenile,Anaxyrus cognatus,96,Soil_Nb,6.08,0.3,0.79,0.075
-Cusaac et al. 2015,Juvenile,Anaxyrus woodhousii ,48,Overspray,0,1,0.45,0.034
-Cusaac et al. 2016,Juvenile,Acris blanchardi,48,Overspray,0,0.75,0.49,0.025
-Cusaac et al. 2017,Juvenile,Anaxyrus woodhousii ,48,Overspray,1.06,1,0.45,0.034
-Cusaac et al. 2018,Juvenile,Acris blanchardi,48,Overspray,1.06,0.93,0.49,0.025
-Cusaac et al. 2019,Juvenile,Anaxyrus woodhousii ,48,Overspray,1.52,1,0.45,0.034
-Cusaac et al. 2020,Juvenile,Acris blanchardi,48,Overspray,1.52,0.97,0.49,0.025
-Bruhl et al. 2013,Juvenile,Rana temporaria ,168,Overspray,0,0.93,0.96,0.25
-Bruhl et al. 2014,Juvenile,Rana temporaria ,168,Overspray,0.22,1,0.84,0.19
-Bruhl et al. 2015,Juvenile,Rana temporaria ,168,Overspray,2.2,0,1.02,0.25
+Study,Stage,Species,Duration,Method,App. Rate (ug a.i./cm2),Survival,MBW (g),SDBW (g)
+Belden et al. 2010,J,A. cognatus,72,Overspray,0,0.96,1.06,0.053
+Belden et al. 2011,J,A. cognatus,72,Overspray,0.22,0.93,1.06,0.053
+Belden et al. 2012,J,A. cognatus,72,Overspray,2.2,0.34,1.06,0.053
+Belden et al. 2013,J,A. cognatus,72,Overspray,22,0,1.06,0.053
+Cusaac et al. 2016a,J/A,A. blanchardi,96,Overspray,0,1,0.49,0.025
+Cusaac et al. 2016a,J/A,A. blanchardi,96,Overspray,0.55,0.96,0.49,0.025
+Cusaac et al. 2016a,J/A,A. blanchardi,96,Overspray,1.1,0.92,0.49,0.025
+Cusaac et al. 2016a,J/A,A. blanchardi,96,Overspray,2.2,0.52,0.49,0.025
+Cusaac et al. 2016a,J/A,A. blanchardi,96,Overspray,4.4,0.1,0.49,0.025
+Cusaac et al. 2016a,J/A,A. blanchardi,96,Overspray,8.8,0.04,0.49,0.025
+Cusaac et al. 2016b,J/A,A. blanchardi,96,Overspray,0,0.93,0.49,0.025
+Cusaac et al. 2016b,J/A,A. blanchardi,96,Overspray,0.38,0.8,0.49,0.025
+Cusaac et al. 2016b,J/A,A. blanchardi,96,Overspray,0.76,0.86,0.49,0.025
+Cusaac et al. 2016b,J/A,A. blanchardi,96,Overspray,1.52,0.7,0.49,0.025
+Cusaac et al. 2016b,J/A,A. blanchardi,96,Overspray,3.04,0.5,0.49,0.025
+Cusaac et al. 2016b,J/A,A. blanchardi,96,Overspray,6.08,0.04,0.49,0.025
+Cusaac et al. 2017a,A,A. cognatus,96,Overspray,1.52,1,0.64,0.03
+Cusaac et al. 2017a,A,A. cognatus,96,Overspray,2.2,1,0.64,0.03
+Cusaac et al. 2017a,A,A. cognatus,96,Overspray,7.6,1,0.64,0.03
+Cusaac et al. 2017a,A,A. cognatus,96,Overspray,11,0.75,0.64,0.03
+Cusaac et al. 2017a,A,A.woodhousii ,96,Overspray,1.52,1,0.45,0.034
+Cusaac et al. 2017a,A,A.woodhousii ,96,Overspray,2.2,0.5,0.45,0.034
+Cusaac et al. 2017a,A,A.woodhousii ,96,Overspray,7.6,1,0.45,0.034
+Cusaac et al. 2017a,A,A.woodhousii ,96,Overspray,11,1,0.45,0.034
+Cusaac et al. 2017b,J,A. cognatus,96,Overspray,0,0.9,0.85,0.053
+Cusaac et al. 2017b,J,A. cognatus,96,Overspray,0.38,0.93,0.85,0.053
+Cusaac et al. 2017b,J,A. cognatus,96,Overspray,0.76,0.93,0.85,0.053
+Cusaac et al. 2017b,J,A. cognatus,96,Overspray,1.52,0.7,0.85,0.053
+Cusaac et al. 2017b,J,A. cognatus,96,Overspray,3.04,0.4,0.85,0.053
+Cusaac et al. 2017b,J,A. cognatus,96,Overspray,6.08,0.17,0.85,0.053
+Cusaac et al. 2017c,J,A. cognatus,96,Soil _Tx,0,0.93,0.79,0.075
+Cusaac et al. 2017c,J,A. cognatus,96,Soil _Tx,1.52,0.95,0.79,0.075
+Cusaac et al. 2017c,J,A. cognatus,96,Soil _Tx,3.04,0.4,0.79,0.075
+Cusaac et al. 2017c,J,A. cognatus,96,Soil _Tx,6.08,0.32,0.79,0.075
+Cusaac et al. 2017d,J,A. cognatus,96,Soil_Nb,0,0.96,0.79,0.075
+Cusaac et al. 2017d,J,A. cognatus,96,Soil_Nb,1.52,0.84,0.79,0.075
+Cusaac et al. 2017d,J,A. cognatus,96,Soil_Nb,3.04,0.56,0.79,0.075
+Cusaac et al. 2017d,J,A. cognatus,96,Soil_Nb,6.08,0.3,0.79,0.075
+Cusaac et al. 2015,J,A. woodhousii ,48,Overspray,0,1,0.45,0.034
+Cusaac et al. 2016,J,A.blanchardi,48,Overspray,0,0.75,0.49,0.025
+Cusaac et al. 2017,J,A. woodhousii ,48,Overspray,1.06,1,0.45,0.034
+Cusaac et al. 2018,J,A.blanchardi,48,Overspray,1.06,0.93,0.49,0.025
+Cusaac et al. 2019,J,A. woodhousii ,48,Overspray,1.52,1,0.45,0.034
+Cusaac et al. 2020,J,A.blanchardi,48,Overspray,1.52,0.97,0.49,0.025
+Bruhl et al. 2013,J,R. temporaria ,168,Overspray,0,0.93,0.96,0.25
+Bruhl et al. 2014,J,R. temporaria ,168,Overspray,0.22,1,0.84,0.19
+Bruhl et al. 2015,J,R. temporaria ,168,Overspray,2.2,0,1.02,0.25
