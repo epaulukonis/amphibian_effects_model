@@ -199,6 +199,7 @@ p4 <- ggplot(t_1inch, aes(x=Chemical, y=Error)) +
 p4
 
 
+plot_grid(p1,p4,p2,p3)
 
 #error < 0 mean that calculated soil concentrations at the mixing depth were higher than the actual soil concentration
 #indicating that that mixing depth over-predicts the concentration
