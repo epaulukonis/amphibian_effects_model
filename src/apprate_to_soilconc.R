@@ -1,4 +1,5 @@
 library(ggplot2)
+library(cowplot)
 
 #let's test and see how close we get to real soil concentrations using the weir method
 #we'll assume an even mixing depth of 1cm, and also test out some other depths 
@@ -138,7 +139,7 @@ t_1cm <- dplyr::filter(soil_edit, depth == 'conc_ugg_1cm')
 p1 <- ggplot(t_1cm, aes(x=Chemical, y=Error)) + 
   geom_boxplot(aes(fill=Chemical))+
   # scale_y_continuous(breaks=seq(0,100, 25))+
-  ggtitle("1cm Depth") +
+  ggtitle("1 cm Depth") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -154,7 +155,7 @@ t_5mm <- dplyr::filter(soil_edit, depth == 'conc_ugg_5mm')
 p2 <- ggplot(t_5mm, aes(x=Chemical, y=Error)) + 
   geom_boxplot(aes(fill=Chemical))+
   scale_y_continuous(breaks=seq(-100,175, 50))+
-  ggtitle("5mm Depth") +
+  ggtitle("5 mm Depth") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -170,7 +171,7 @@ t_1mm <- dplyr::filter(soil_edit, depth == 'conc_ugg_1mm')
 p3 <- ggplot(t_1mm, aes(x=Chemical, y=Error)) + 
   geom_boxplot(aes(fill=Chemical))+
   scale_y_continuous(breaks=seq(-500,50,100))+
-  ggtitle("1mm Depth") +
+  ggtitle("1 mm Depth") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -182,8 +183,26 @@ p3 <- ggplot(t_1mm, aes(x=Chemical, y=Error)) +
 p3
 
 
-#error less than 0 mean that calculated soil concentrations at the mixing depth were higher than the actual soil concentration
+t_1inch <- dplyr::filter(soil_edit, depth == 'conc_ugg_1inch')
+p4 <- ggplot(t_1inch, aes(x=Chemical, y=Error)) + 
+  geom_boxplot(aes(fill=Chemical))+
+  # scale_y_continuous(breaks=seq(-500,50,100))+
+  ggtitle("1 inch Depth") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16),
+        legend.position = 'none')
+p4
+
+
+
+#error < 0 mean that calculated soil concentrations at the mixing depth were higher than the actual soil concentration
 #indicating that that mixing depth over-predicts the concentration
 
 #error > 0 mean that calculated soil concentrations at the mixing depth were higher than the actual soil concentration
+#indicating that that mixing depth under-predicts the concentration
 
