@@ -47,6 +47,8 @@ ggplot(pyra_f, aes(y = Species)) +
 #toxicity data
 effects<-read.csv('data_in/Headline_updated.csv')
 param<-read.csv('data_in/parameters.csv')
+effects$half_life<-(effects$Duration_h*log(2))/log(1/effects$Survival)#need to modify survival by duration, using an exponential growth curve
+effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
 
 pmolweight<-387.8 #g/mol #comptox
 plogKow<- 4.44 #comptox

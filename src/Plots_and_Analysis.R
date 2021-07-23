@@ -117,10 +117,60 @@ save.image(file='myEnvironment_analysis.RData')
 
 
 ####Plots----
-# Figure 1: application rate and 96hr mortality figure?
+# Figure 1a: application rate and 96hr mortality figure?
+# Figure 1b: quantile of 
 # Figure 2: Distribution of posterior probabilities across 9 models to show why we picked them
 # Figure 3: KDEs of BMDs across top 3 models
 # Figure 4: DR curve for top 3 models and 95% credibility interval + median, plotted with original dataset
+
+
+# Figure 1: application rate and 96hr mortality figure?
+effects<-read.csv('data_in/Headline_updated.csv')
+param<-read.csv('data_in/parameters.csv')
+
+#toxicity data
+effects<-read.csv('data_in/Headline_updated.csv')
+param<-read.csv('data_in/parameters.csv')
+effects$half_life<-(effects$Duration_h*log(2))/log(1/effects$Survival)#need to modify survival by duration, using an exponential growth curve
+effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
+
+pmolweight<-387.8 #g/mol #comptox
+plogKow<- 4.44 #comptox
+kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
+dt<-param[1,2]
+move_rate<-param[3,2]
+hl<-4.91*24 #from comptox profile
+bioavail<-param[5,2]
+dsa<-param[9,2]*effects$M_Body_Weight_g^param[9,2] 
+derm_frac<-param[11,2]
+soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
+soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
+
+#this calculates dermal dose 
+dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effects$M_Body_Weight_g
+head(dermal_dose) #take a look
+effects$dermaldose<-dermal_dose
+effects$Mortality<-1-effects$adj_sur_96
+
+
+ggplot(effects, aes(x=dermaldose, y=Mortality)) +
+  geom_point() + 
+  # geom_smooth(method=lm)+
+  ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, All Data") +
+  ylab("Mortality") +
+  xlab("Tissue Concentration (ug/g)")+
+  scale_color_manual(values='#2ca25f')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16),
+        legend.position = 'none')
+
+1-mean(effects$Survival)
+mean(effects$dermaldose)
 
 
 #Figure 2 - plot of posterior probability weights across 9 models 

@@ -9,6 +9,7 @@ head(lab)
 names(lab)
 
 soil<-na.omit(lab[,c(1,2,4,8)])
+unique(soil$chemical)
 
 
 ###scatter plot lm all pesticides----
