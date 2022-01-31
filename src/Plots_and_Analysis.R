@@ -10,10 +10,13 @@ library(ToxicR)
 library(nlme)
 library(ggplot2)
 library(ggridges)
+library(gridExtra)
+library(grid)
 library(readr)
 library(bayestestR)
 library(dplyr)
 library(tidyverse)
+library(cowplot)
 setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
 #load('myEnvironment_analysis.RData')
 
@@ -21,14 +24,18 @@ setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profil
 #all plots here are part of the manuscript
 #some of the script will be similar to the comparison plots found in 'Comparison_BBMD_BMDS.R'
 
-####Analysis----
-sims<-read.csv('data_out/BMDS_headline_fin_61421.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+save.image(file='myEnvironment_analysis.RData') 
+
+
+
+#### Pyraclostrobin Analysis ----
+sims<-read.csv('data_out/BMDS_headline_fin_132022.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
 
 
-##firt nested level of function output
+##first nested level of function output
 mcmc_ma$exp_n1$ma_bmd
 #ma_bmd -  cdf of the BMD? first used to calculate the CL of the bmd 
 mcmc_ma$exp_n1$bmd
@@ -53,7 +60,8 @@ postw$Model<-mod_list_f #add column for model
 tab_med<-postw %>%
   group_by(Model) %>% 
   summarize(med=median(PosteriorProbs))
-write.csv(tab_med,'data_out/BMDS_posteriorweight_median_run5.csv')
+print(tab_med)
+write.csv(tab_med,'data_out/BMDS_posteriorweight_median_headline.csv')
 
 #pull model average BMD, bmdl, bmdu
 bmdsorder<-c('bmds','bmdl','bmdu')
@@ -68,10 +76,9 @@ bmds$Model<-'ModelAverage'
 
 
 #run mcmc over top 3 models
-mcmc_g<- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "gamma",fit_type = "mcmc"))
-mcmc_lp <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "log-probit",fit_type = "mcmc"))
-mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "qlinear",fit_type = "mcmc"))
-
+mcmc_ll<- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "probit",fit_type = "mcmc"))
+mcmc_p <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "log-probit",fit_type = "mcmc"))
+mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "log-logistic",fit_type = "mcmc"))
 
 #try plotting with built-in plot function
 # out_mcmc_result<-mcmc_ll$exp_n1$mcmc_result
@@ -82,19 +89,19 @@ mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],mode
 # df<-mcmc_ll$exp_n1
 # plot(test$V1~test$V2) #doesn't seem to be original plot; goes above 0.5 (plotly plot doesn't)
 plot(mcmc_ma$exp_n1)
-plot(mcmc_ma$exp_n1$Individual_Model_8)
+plot(mcmc_ma$exp_n1$Individual_Model_2)
 
 
 #organize and put outputs in dataframe
-ll<-lapply(mcmc_g, function (x) x['bmd'])
+ll<-lapply(mcmc_ll, function (x) x['bmd'])
 ll<-as.data.frame(unlist(ll))
 ll<-tibble::rownames_to_column(ll, "Simulation")
 ll$Simulation = substr(ll$Simulation,1,nchar(ll$Simulation)-1)
 colnames(ll)[2]<-'BMDSEstimates'
 ll$order<-bmds_order
-ll$Model<-'Gamma'
+ll$Model<-'Probit'
 
-p<-lapply(mcmc_lp, function (x) x['bmd'])
+p<-lapply(mcmc_p, function (x) x['bmd'])
 p<-as.data.frame(unlist(p))
 p<-tibble::rownames_to_column(p, "Simulation")
 p$Simulation = substr(p$Simulation,1,nchar(p$Simulation)-1)
@@ -108,58 +115,213 @@ q<-tibble::rownames_to_column(q, "Simulation")
 q$Simulation = substr(q$Simulation,1,nchar(q$Simulation)-1)
 colnames(q)[2]<-'BMDSEstimates'
 q$order<-bmds_order
-q$Model<-'QuantalLinear'
+q$Model<-'Log-Logistic'
 
 bmds_est<-rbind(bmds,ll,p,q)
-#write.csv(bmds_est,'data_out/BMDS_bmdsbmdlbmdu_top3.csv')
-
-save.image(file='myEnvironment_analysis.RData') 
+write.csv(bmds_est,'data_out/BMDS_headline_top3.csv')
 
 
-####Plots----
-# Figure 1a: application rate and 96hr mortality figure?
-# Figure 1b: quantile of 
+##### Glyphosate Analysis ----
+sims<-read.csv('data_out/BMDS_glyphosate_fin_132022.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+by_s<-split(sims, list(sims$set), drop=T) #split by simulation
+mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
+mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
+
+
+##first nested level of function output
+mcmc_ma$exp_n1$ma_bmd
+#ma_bmd -  cdf of the BMD? first used to calculate the CL of the bmd 
+mcmc_ma$exp_n1$bmd
+#median bmd, bmdl, bmdu
+mcmc_ma$exp_n1$posterior_probs
+#prob weights for all models
+
+##second nested level of function output
+mcmc_ma$exp_n1$Individual_Model_1$mcmc_result #30,000 rows of param samples 
+
+
+post<-lapply(mcmc_ma, function (x) x['posterior_probs']) #pull out posterior probabilities 
+postw<-as.data.frame(unlist(post))
+postw<-tibble::rownames_to_column(postw, "Simulation")
+postw$Simulation = substr(postw$Simulation,1,nchar(postw$Simulation)-1) #remove extraneous characters
+colnames(postw)[2]<-'PosteriorProbs'
+mod_list_f<-rep(mod_list, times=1000)
+postw$Model<-mod_list_f #add column for model
+#write.csv(postw, 'data_out/PosteriorWeights.csv')
+
+#look at median of PW across all models 
+tab_med<-postw %>%
+  group_by(Model) %>% 
+  summarize(med=median(PosteriorProbs))
+print(tab_med)
+write.csv(tab_med,'data_out/BMDS_posteriorweight_median_glyphosate.csv')
+
+#pull model average BMD, bmdl, bmdu
+bmdsorder<-c('bmds','bmdl','bmdu')
+bmds_order<-rep(bmdsorder, times=1000)
+bmds<-lapply(mcmc_ma, function (x) x['bmd']) #pull out bmds and bmdls
+bmds<-as.data.frame(unlist(bmds))
+bmds<-tibble::rownames_to_column(bmds, "Simulation")
+bmds$Simulation = substr(bmds$Simulation,1,nchar(bmds$Simulation)-1)
+colnames(bmds)[2]<-'BMDSEstimates'
+bmds$order<-bmds_order
+bmds$Model<-'ModelAverage'
+
+
+bmds_bmd<-bmds[bmds$order == 'bmds',]
+mean(bmds_bmd$BMDSEstimates)
+
+
+#run mcmc over top 3 models
+mcmc_ll<- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "gamma",fit_type = "mcmc"))
+mcmc_p <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "log-probit",fit_type = "mcmc"))
+mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "weibull",fit_type = "mcmc"))
+
+
+#try plotting with built-in plot function
+# out_mcmc_result<-mcmc_ll$exp_n1$mcmc_result
+# out_mcmc_fittedmodel<-mcmc_ll$exp_n1$fitted_model
+# out_mcmc_prior <-mcmc_ll$exp_n1$prior
+# out_bmd_samples<-as.data.frame(mcmc_ll$exp_n1$mcmc_result$BMD_samples)
+# plot(mcmc_ll$exp_n1)
+# df<-mcmc_ll$exp_n1
+# plot(test$V1~test$V2) #doesn't seem to be original plot; goes above 0.5 (plotly plot doesn't)
+plot(mcmc_ma$exp_n100)
+plot(mcmc_ma$exp_n1$Individual_Model_1)
+
+
+#organize and put outputs in dataframe
+ll<-lapply(mcmc_ll, function (x) x['bmd'])
+ll<-as.data.frame(unlist(ll))
+ll<-tibble::rownames_to_column(ll, "Simulation")
+ll$Simulation = substr(ll$Simulation,1,nchar(ll$Simulation)-1)
+colnames(ll)[2]<-'BMDSEstimates'
+ll$order<-bmds_order
+ll$Model<-'Gamma'
+
+p<-lapply(mcmc_p, function (x) x['bmd'])
+p<-as.data.frame(unlist(p))
+p<-tibble::rownames_to_column(p, "Simulation")
+p$Simulation = substr(p$Simulation,1,nchar(p$Simulation)-1)
+colnames(p)[2]<-'BMDSEstimates'
+p$order<-bmds_order
+p$Model<-'Log-Probit'
+
+q<-lapply(mcmc_q, function (x) x['bmd'])
+q<-as.data.frame(unlist(q))
+q<-tibble::rownames_to_column(q, "Simulation")
+q$Simulation = substr(q$Simulation,1,nchar(q$Simulation)-1)
+colnames(q)[2]<-'BMDSEstimates'
+q$order<-bmds_order
+q$Model<-'Weibull'
+
+bmds_est<-rbind(bmds,ll,p,q)
+write.csv(bmds_est,'data_out/BMDS_headline_top3.csv')
+
+
+############################Plots---- 
+#toxicity data
+
+# pyraclostrobin
+effectsp<-read.csv('data_in/Headline_updated.csv')
+param<-read.csv('data_in/parameters.csv')
+effectsp$half_life<-(effectsp$Duration_h*log(2))/log(1/effectsp$Survival) #need to modify survival by duration, using an exponential growth curve
+effectsp$adj_sur_96<-round(1/(2^(96/effectsp$half_life)),3)
+
+
+pmolweight<-387.8 #g/mol #comptox
+plogKow<- 4.44 #comptox
+kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
+hl<-4.91*24 #from comptox profile
+dt<-param[1,2]
+move_rate<-param[3,2]
+bioavail<-param[5,2]
+dsa<-param[9,2]*effectsp$M_Body_Weight_g^param[9,2] 
+derm_frac<-param[11,2]
+soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
+soil_concs<-((effectsp$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
+
+#this calculates dermal dose 
+dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effectsp$M_Body_Weight_g
+head(dermal_dose) #take a look
+effectsp$dermaldose<-dermal_dose
+effectsp$Mortality<-1-effectsp$adj_sur_96
+
+
+
+# glyphosate
+effectsg<-read.csv('data_in/Glyphosate_updated.csv')
+param<-read.csv('data_in/parameters.csv')#need to modify survival by duration, using an exponential growth curve
+effectsg$adj_sur_96<-effectsg$Survival
+
+
+pmolweight<-169.1 #g/mol #comptox
+plogKow<- -3.12 #comptox
+kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
+hl<-4.46*24 #from comptox profile
+dt<-param[1,2]
+move_rate<-param[3,2]
+bioavail<-param[5,2]
+dsa<-param[9,2]*effectsg$Body_Weight_g^param[9,2] 
+derm_frac<-param[11,2]
+soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
+soil_concs<-((effectsg$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
+
+#this calculates dermal dose 
+dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effectsg$Body_Weight_g
+head(dermal_dose) #take a look
+effectsg$dermaldose<-dermal_dose
+effectsg$Mortality<-1-effectsg$adj_sur_96
+
+
+#combine both datasets
+names(effectsg)[11]<-"Body_Weight_g"
+effects<-rbind(effectsg[,c(1:18,20:22)], effectsg[,1:21])
+
+# Figure 1: application rate and 96hr mortality figure?
 # Figure 2: Distribution of posterior probabilities across 9 models to show why we picked them
 # Figure 3: KDEs of BMDs across top 3 models
 # Figure 4: DR curve for top 3 models and 95% credibility interval + median, plotted with original dataset
 
 
 # Figure 1: application rate and 96hr mortality figure?
-effects<-read.csv('data_in/Headline_updated.csv')
-param<-read.csv('data_in/parameters.csv')
+colorBlindGrey8   <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-#toxicity data
-effects<-read.csv('data_in/Headline_updated.csv')
-param<-read.csv('data_in/parameters.csv')
-effects$half_life<-(effects$Duration_h*log(2))/log(1/effects$Survival)#need to modify survival by duration, using an exponential growth curve
-effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
-
-pmolweight<-387.8 #g/mol #comptox
-plogKow<- 4.44 #comptox
-kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
-dt<-param[1,2]
-move_rate<-param[3,2]
-hl<-4.91*24 #from comptox profile
-bioavail<-param[5,2]
-dsa<-param[9,2]*effects$M_Body_Weight_g^param[9,2] 
-derm_frac<-param[11,2]
-soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
-soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
-
-#this calculates dermal dose 
-dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effects$M_Body_Weight_g
-head(dermal_dose) #take a look
-effects$dermaldose<-dermal_dose
-effects$Mortality<-1-effects$adj_sur_96
-
-
-ggplot(effects, aes(x=dermaldose, y=Mortality)) +
-  geom_point() + 
+pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, color = Species)) +
+  geom_point(aes(shape=Study, color=Species), size=2) + 
+  scale_shape_manual(values=c(3,7:9,15:19))+
+  scale_color_manual(values=colorBlindGrey8)+
   # geom_smooth(method=lm)+
-  ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, All Data") +
+  ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, Pyaclostrobin") +
   ylab("Mortality") +
   xlab("Tissue Concentration (ug/g)")+
-  scale_color_manual(values='#2ca25f')+
+  #scale_color_manual(values='#2ca25f')+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16),
+        legend.position = 'none')
+pp
+
+legendp <- cowplot::get_legend(pp)
+grid.newpage()
+grid.draw(legendp)
+
+
+# Figure 1: application rate and 96hr mortality figure?
+pg<-ggplot(effectsg, aes(x=dermaldose, y=Mortality, color=Species)) +
+  geom_point(aes(shape=Study, color=Species), size=2) + 
+  scale_shape_manual(values=c(16,17))+
+  scale_color_manual(values=colorBlindGrey8)+
+  # geom_smooth(method=lm)+
+  ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, Glyphosate") +
+  ylab("Mortality") +
+  xlab("Tissue Concentration (ug/g)")+
+  # scale_color_manual(values='#2ca25f')+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -169,8 +331,14 @@ ggplot(effects, aes(x=dermaldose, y=Mortality)) +
         plot.title = element_text(face = 'bold', size = 16),
         legend.position = 'none')
 
-1-mean(effects$Survival)
-mean(effects$dermaldose)
+pg
+
+legendg <- cowplot::get_legend(pg)
+grid.newpage()
+grid.draw(legendp)
+
+
+grid.arrange(pp, legendg, pg, legendp, nrow = 2, ncol = 2)
 
 
 #Figure 2 - plot of posterior probability weights across 9 models 

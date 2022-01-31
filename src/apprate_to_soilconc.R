@@ -60,6 +60,7 @@ p
 
 
 ###scatter plot lm individual pesticides----
+unique(soil$chemical)
 prop <- dplyr::filter(soil, chemical == 'atrazine')
 
 #let's also alter the app rate units to match our dataset
