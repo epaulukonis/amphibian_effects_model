@@ -61,7 +61,7 @@ p
 
 ###scatter plot lm individual pesticides----
 unique(soil$chemical)
-prop <- dplyr::filter(soil, chemical == 'atrazine')
+prop <- dplyr::filter(soil, chemical == 'trifloxystrobin')
 
 #let's also alter the app rate units to match our dataset
 prop$app_rate_ug_cm2<-prop$app_rate_g_cm2*1000000
@@ -91,10 +91,12 @@ prop_e<-prop[,c(4:15)]
 prop_t<-tidyr::gather(prop_e, "depth","conc",1,4:12)
 max(prop_e$soil_conc_ugg)
 
-p <- ggplot(prop_t, aes(app_rate_ug_cm2, conc,color=depth))+
+p <- ggplot(prop_t, aes(app_rate_ug_cm2, conc, color=depth, shape= depth))+
   geom_point() +
-  ylim(0,50)+
-  xlim(22,25)+
+  ylim(0,0.45)+
+  xlim()+
+  scale_shape_manual(values=c(1:15))+
+  scale_color_manual(values=colorBlindGrey8)+
   geom_smooth(method=lm, se=FALSE, fullrange=TRUE)+
   ylab("Calculated Soil Conc (ug/g)") +
   xlab("Application rate (ug/cm2)")+
@@ -103,6 +105,11 @@ p <- ggplot(prop_t, aes(app_rate_ug_cm2, conc,color=depth))+
         axis.line = element_line(colour = "black"), axis.text.x = element_text(size = 12),
         axis.title.x = element_text(face='bold'))
 p
+
+
+avg_conc<-prop_t %>% group_by(depth) %>% summarise(avg = mean(conc))
+#0.302 application rate results in a soil concentration of 0.260 for trifloxystrobin
+# the closest estimated mixing depth was 7mm, with a concentration of 0.270
 
 
 ###boxplot with error between estimates----

@@ -24,8 +24,6 @@ setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profil
 #all plots here are part of the manuscript
 #some of the script will be similar to the comparison plots found in 'Comparison_BBMD_BMDS.R'
 
-save.image(file='myEnvironment_analysis.RData') 
-
 
 
 #### Pyraclostrobin Analysis ----
@@ -45,8 +43,6 @@ mcmc_ma$exp_n1$posterior_probs
 
 ##second nested level of function output
 mcmc_ma$exp_n1$Individual_Model_1$mcmc_result #30,000 rows of param samples 
-
-  
 post<-lapply(mcmc_ma, function (x) x['posterior_probs']) #pull out posterior probabilities 
 postw<-as.data.frame(unlist(post))
 postw<-tibble::rownames_to_column(postw, "Simulation")
@@ -228,7 +224,6 @@ param<-read.csv('data_in/parameters.csv')
 effectsp$half_life<-(effectsp$Duration_h*log(2))/log(1/effectsp$Survival) #need to modify survival by duration, using an exponential growth curve
 effectsp$adj_sur_96<-round(1/(2^(96/effectsp$half_life)),3)
 
-
 pmolweight<-387.8 #g/mol #comptox
 plogKow<- 4.44 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
@@ -254,7 +249,6 @@ effectsg<-read.csv('data_in/Glyphosate_updated.csv')
 param<-read.csv('data_in/parameters.csv')#need to modify survival by duration, using an exponential growth curve
 effectsg$adj_sur_96<-effectsg$Survival
 
-
 pmolweight<-169.1 #g/mol #comptox
 plogKow<- -3.12 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
@@ -275,8 +269,8 @@ effectsg$Mortality<-1-effectsg$adj_sur_96
 
 
 #combine both datasets
-names(effectsg)[11]<-"Body_Weight_g"
-effects<-rbind(effectsg[,c(1:18,20:22)], effectsg[,1:21])
+#names(effectsg)[11]<-"Body_Weight_g"
+#effects<-rbind(effectsg[,c(1:18,20:22)], effectsg[,1:21])
 
 # Figure 1: application rate and 96hr mortality figure?
 # Figure 2: Distribution of posterior probabilities across 9 models to show why we picked them
@@ -284,14 +278,28 @@ effects<-rbind(effectsg[,c(1:18,20:22)], effectsg[,1:21])
 # Figure 4: DR curve for top 3 models and 95% credibility interval + median, plotted with original dataset
 
 
+effectsp$label<-paste(effectsp$Study, effectsp$Species, sep="")
+effectsp <-effectsp[order(effectsp$label),]
+unique(effectsp$label) # get unique combos of study and species
+
 # Figure 1: application rate and 96hr mortality figure?
 colorBlindGrey8   <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
-                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#762a83", "#000000","#7fbc41")
 
-pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, color = Species)) +
-  geom_point(aes(shape=Study, color=Species), size=2) + 
-  scale_shape_manual(values=c(3,7:9,15:19))+
-  scale_color_manual(values=colorBlindGrey8)+
+pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, colour=label,shape=label)) +
+  geom_point(size=2) + 
+  scale_shape_manual(name = "Study and Species", 
+    labels = c("Belden et al. 2010, Anaxyrus cognatus","Bruhl et al. 2013, Rana temporaria","Cusaac et al. 2015, Anaxyrus woodhousii", "Cusaac et al. 2015, Acris blanchardi",
+               "Cusaac et al. 2016a, Acris blanchardi", "Cusaac et al. 2016b, Acris blanchardi",
+               "Cusaac et al. 2017a, Anaxyrus cognatus", "Cusaac et al. 2017a, Anaxyrus woodhousii", "Cusaac et al. 2017b, Anaxyrus cognatus",
+               "Cusaac et al. 2017c, Anaxyrus cognatus", "Cusaac et al. 2017d, Anaxyrus cognatus"),
+    values=c(3:4,7:12,15,17,19))+
+  scale_color_manual( name = "Study and Species",
+                      labels = c("Belden et al. 2010, Anaxyrus cognatus","Bruhl et al. 2013, Rana temporaria","Cusaac et al. 2015, Anaxyrus woodhousii", "Cusaac et al. 2015, Acris blanchardi",
+                                 "Cusaac et al. 2016a, Acris blanchardi", "Cusaac et al. 2016b, Acris blanchardi",
+                                 "Cusaac et al. 2017a, Anaxyrus cognatus", "Cusaac et al. 2017a, Anaxyrus woodhousii", "Cusaac et al. 2017b, Anaxyrus cognatus",
+                                 "Cusaac et al. 2017c, Anaxyrus cognatus", "Cusaac et al. 2017d, Anaxyrus cognatus"),
+    values=colorBlindGrey8)+
   # geom_smooth(method=lm)+
   ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, Pyaclostrobin") +
   ylab("Mortality") +
@@ -303,20 +311,30 @@ pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, color = Species)) +
         axis.text.y = element_text(size=12, face='bold'),
         axis.title.x = element_text(size=14, face='bold'),
         axis.title.y = element_text(size=14, face='bold'),
-        plot.title = element_text(face = 'bold', size = 16),
-        legend.position = 'none')
+        plot.title = element_text(face = 'bold', size = 16))
+        #legend.position = 'none') #first run without this to get legend
 pp
 
-legendp <- cowplot::get_legend(pp)
-grid.newpage()
-grid.draw(legendp)
-
+ 
+effectsg$label<-paste(effectsg$Study, effectsg$Species, sep="")
+effectsg <-effectsg[order(effectsg$label),]
+unique(effectsg$label) # get unique combos of study and species
 
 # Figure 1: application rate and 96hr mortality figure?
-pg<-ggplot(effectsg, aes(x=dermaldose, y=Mortality, color=Species)) +
-  geom_point(aes(shape=Study, color=Species), size=2) + 
-  scale_shape_manual(values=c(16,17))+
-  scale_color_manual(values=colorBlindGrey8)+
+pg<-ggplot(effectsg, aes(x=dermaldose, y=Mortality, color=label, shape =  label)) +
+  geom_point(size=2) + 
+  scale_shape_manual(name = "Study and Species", 
+                     labels = c("Bernal et al. 2009, Centrolene prosblepon","Bernal et al. 2009, Engystomops pustulosus", 
+                                "Bernal et al. 2009, Pristimantis taeniatus","Bernal et al. 2009, Rhinella granulosa",
+                                "Bernal et al. 2009, Rhinella marina","Bernal et al. 2009, Rhinella roqueana",
+                                "Bernal et al. 2009, Scinax ruber","Meza-Joya et al. 2013, Eleutherodactylus johnstonei"),
+    values=c(3:4,7:12))+
+  scale_color_manual(name = "Study and Species", 
+                     labels = c("Bernal et al. 2009, Centrolene prosblepon","Bernal et al. 2009, Engystomops pustulosus", 
+                                "Bernal et al. 2009, Pristimantis taeniatus","Bernal et al. 2009, Rhinella granulosa",
+                                "Bernal et al. 2009, Rhinella marina","Bernal et al. 2009, Rhinella roqueana",
+                                "Bernal et al. 2009, Scinax ruber","Meza-Joya et al. 2013, Eleutherodactylus johnstonei"),
+                     values=colorBlindGrey8)+
   # geom_smooth(method=lm)+
   ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, Glyphosate") +
   ylab("Mortality") +
@@ -328,17 +346,13 @@ pg<-ggplot(effectsg, aes(x=dermaldose, y=Mortality, color=Species)) +
         axis.text.y = element_text(size=12, face='bold'),
         axis.title.x = element_text(size=14, face='bold'),
         axis.title.y = element_text(size=14, face='bold'),
-        plot.title = element_text(face = 'bold', size = 16),
-        legend.position = 'none')
+        plot.title = element_text(face = 'bold', size = 16))
+        #legend.position = 'none') #first run without this to get legend
 
 pg
 
-legendg <- cowplot::get_legend(pg)
-grid.newpage()
-grid.draw(legendp)
 
-
-grid.arrange(pp, legendg, pg, legendp, nrow = 2, ncol = 2)
+grid.arrange(pp,pg, nrow = 2, ncol = 1)
 
 
 #Figure 2 - plot of posterior probability weights across 9 models 
