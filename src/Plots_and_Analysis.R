@@ -380,7 +380,7 @@ ggplot(bmds_est, aes(y = Model)) +
     title = "Benchmark Dose (BMD) Estimates by Model" ) +
   theme_ridges()
 
-#jsut for bmds
+#just for bmds
 ggplot(bmds, aes(x=BMDSEstimates, group=Model)) + 
   geom_density(aes(fill=Model), alpha=0.2)+
   scale_fill_manual(values=c("#E69F00", "#D55E00", "#56B4E9", "#009E73"))+

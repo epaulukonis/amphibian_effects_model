@@ -77,12 +77,42 @@ unique(strob_l$app_rate_g_cm2)  #need to convert to ug/cm2
 strob_l$Application_Rate<-strob_l$app_rate_g_cm2*1000000
 
 mean(strob_l$tissue_conc_ugg)
-pyra_est_lowdose<-pyra_est %>% filter(Application_Rate < 1)
+pyra_est_lowdose<-pyra_est %>% filter(Application_Rate < 1) #filter lower application rates and comparable dermal doses
 
-ggplot(pyra_est_lowdose, aes(x = dermaldose, y = Application_Rate))+
-  geom_point(colour=Application_Rate)
+ggplot(pyra_est_lowdose, aes(x = dermaldose, y = Application_Rate, colour=Application_Rate))+
+  geom_point()
 
-#compare dermal doses calculated at similar app rates and the 8 hour trifloxystrobin next week
+
+strob_l_est<-strob_l[c(10,11,5,14,3,12)] #get in format like the pyralcostrobin dataset
+names(strob_l_est)<-names(pyra_est)
+
+strob_data<-rbind(pyra_est,strob_l_est)
+strob_data$half_life<-(strob_data$Duration_h*log(2))/log(1/strob_data$dermaldose) #need to modify survival by duration, using an exponential growth curve
+strob_data$adj_dermaldose<-round(1/(2^(96/strob_data$half_life)),3)
+
+studynames<-c("Belden et al. 2010", "Bruhl et al. 2013", "Cusaac et al. 2015", "Cusaac et al. 2016a", "Cusaac et al. 2016b",
+              "Cusaac et al. 2017a","Cusaac et al. 2017b", "Cusaac et al. 2017c", "Cusaac et al. 2017d", "Glinski et al. 2020 - trifloxystrobin")
+
+colorBlindGrey8   <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
+                       "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#762a83", "#000000","#7fbc41")
+
+p<-ggplot(strob_data, aes(x = dermaldose, y = Application_Rate, colour=Study))+
+  geom_point()+
+  scale_colour_manual(labels =  studynames, values=colorBlindGrey8)+
+  ylab("Application Rate") +
+  xlab("Tissue Concentration (ug/g)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16),
+        legend.title= element_text(size=14, 
+                                   face="bold"))
+p
+
+
 
 
 #### toxicity data
