@@ -9,9 +9,12 @@ setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profil
 
 
 
-#we run through the analysis and simulation with Pyraclostrobin and Glyphosate, plus hopefully one other pesticide
-##evaluating statistical significance using cochran-armitage test (Neurhauser et al. 1999)
-#try fitting with 95 hour mortality un-rounded
+# we run through the analysis and simulation with Pyraclostrobin and Glyphosate
+# evaluating statistical significance using cochran-armitage test (Neurhauser et al. 1999)
+# modify the exposure duration using a decay function to 96 hours
+
+
+mod<-read.csv('data_in/As_Modifier.csv')
 
 
 #### Pyraclostrobin ----
@@ -25,7 +28,7 @@ nsims<-1000
 effects$half_life<-(effects$Duration_h*log(2))/log(1/effects$Survival) #need to modify survival by duration, using an exponential growth curve
 effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
 print(names(effects))
-df_sig<-effects[,c(1,5,8,10,17)] #make sure this output matches
+df_sig<-effects[,c(1,5,9,11,18)] #make sure this output matches
 df_sig<-na.omit(df_sig)
 df_sig$mort<-round(df_sig$N_Exp - (df_sig$Survival*df_sig$N_Exp),0)
 df_sig$alive<-df_sig$N_Exp-df_sig$mort
@@ -60,7 +63,6 @@ CA_increasing_trend
 
 effects_sub<-effects[(effects$Study =='Cusaac_2015' & effects$Species == 'Acris blanchardi'),]
 effects<-effects[!(effects$Study == 'Cusaac_2017a' | effects$Study == 'Cusaac_2015'), ] 
-
 effects<-rbind(effects,effects_sub)
 effects<-effects[order(effects$Study),]
 
@@ -82,22 +84,19 @@ control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survi
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
 effects<-rbind(effects,control)
-#effects <-effects[order(effects$Study),]
 min(effects$M_Body_Weight_g)
 min(effects$SD)
-#the min of the bw never goes below the max of the sd
+effects <-effects[order(effects$Study),]
 
-#prepare data for lognormal distribution draw
-effects$bw_m<-log(effects$M_Body_Weight_g^2 / sqrt(effects$SD^2 + effects$M_Body_Weight_g^2))
-effects$bw_sd<-sqrt(log(1 + (effects$SD^2 / effects$M_Body_Weight_g^2)))
 
-##let's bootstrap some data based on our original dataset
+###Body weights
 #Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
-
 by_s<-split(effects, list(effects$Study,effects$Species,effects$Application_Rate), drop=T) #split by study, species, application rate use SE
+by_s<-by_s[order(names(by_s))]
 print(names(by_s[[1]]))
+
 bw_sim<-replicate(nsims,
-                  {normalize <- lapply(by_s, function(y) rlnorm(nrow(y), mean=y[[22]], sd=y[[23]]))
+                  {normalize <- lapply(by_s, function(y) rnorm(nrow(y), mean=y[[12]], sd=y[[13]]))
                   bw_sim<-as.data.frame(unlist(normalize))
                   })
 
@@ -105,6 +104,9 @@ bw_sim<-do.call(cbind.data.frame, bw_sim)
 colnames(bw_sim)[1:nsims]<-names<-paste0("BW",1:nsims,"")
 
 
+
+
+###survival
 #simulate survival using a binomial distribution with modified duration
 survival_sim <- matrix(data=NA,nrow=nrow(effects),ncol=nsims)
 colnames(survival_sim)[1:nsims]<-paste0("Sur",1:nsims,"")
@@ -115,7 +117,7 @@ for(i in 1:nrow(effects)){
 }
 survival_sim<-as.data.frame(survival_sim)
 
-
+###exposure parameters
 #simulate the exposure parameters from Purucker et al. 2021
 exposure_sims <- matrix(data=NA,nrow=nsims,ncol=6)
 colnames(exposure_sims) <- c("dt_mean","movement_rate_mean","bioavail_mean",
@@ -130,13 +132,12 @@ exposure_sims[,6]<-rnorm(nsims, mean=param[11,2], sd=param[12,2])
 exposure_sims<-as.data.frame(exposure_sims)
 
 
-#pyraclostrobin
+###pyraclostrobin
 #calculate dermal dosage 
 pmolweight<-387.8 #g/mol #comptox
 plogKow<- 4.44 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
 hl<-4.91*24 #from comptox profile
-
 
 #calculate soil concentrations; application rate will remain the same, the exponent value changes with exposure parameter simulations
 soil_concs_degs<-as.data.frame(log(2)/hl*96/exposure_sims$movement_rate_mean) #use 96 as duration, as we adjusted all survivals for a 96h timeframe
@@ -147,11 +148,67 @@ for (i in 1:nsims){
   dermal_dose<-(soil_concs^soil_concs_degs[i,] * kp_pyra * (dsa/exposure_sims[i,1]) * exposure_sims[i,6] * exposure_sims[i,3])/bw_sim[,i]
   my_list[[i]]<-dermal_dose
 }
+
+
+
 my_list[9] #check the list outputs to be sure
 derm<-as.data.frame(t(do.call(rbind.data.frame, my_list)))
 colnames(derm)<-paste0("dermdose",1:nsims,"")
 row.names(derm)<-NULL
-#outputs are in ugg
+
+
+#this calculates just the soil exposure, NOT overspray; we need to adjust it using the method I describe in the manuscript
+#I.e, use allometric relationship, x that by the application rate, and that is the factor that should be used to modify the tissue concentration
+
+#For each output; multiply the simulated bw by the As value; 
+#then adjust the dermal dose by that much. 100% of As, 50% As, and 2/3 As.
+
+fam<-as.data.frame(cbind(effects$Family, effects$Study))
+names(fam)<-c('Family', 'Study')
+mod_As<- merge(fam,mod, by  = "Family") 
+mod_As<-mod_As[order(mod_As$Study),]
+
+
+bw_sim_as<-bw_sim
+exp<-bw_sim_as^mod_As$Exponent 
+as<-mod_As$As_Modifyer*exp
+colnames(as)[1:nsims]<-names<-paste0("As",1:nsims,"")
+
+##100% of surface area 
+derm_adj_r<-derm*as
+
+#Check ratio:
+ratio_100<-derm_adj_r/derm
+ratio_100$Family<-effects$Family #add family
+BCF_100_m<- ratio_100 %>% 
+  group_by(Family) %>%
+  summarise(across(dermdose1:dermdose1000,mean, na.rm = TRUE))
+print(rowMeans(BCF_100_m[2:1001]))
+
+
+##50% of surface area
+derm_adj_r<-derm*(as/2)
+
+#Check ratio:
+ratio_50<-derm_adj_r/derm
+ratio_50$Family<-effects$Family #add family
+BCF_50_m<- ratio_50 %>% 
+  group_by(Family) %>%
+  summarise(across(dermdose1:dermdose1000, mean, na.rm = TRUE))
+print(rowMeans(BCF_50_m[2:1001]))
+
+##2/3 of surface area
+derm_adj_r<-derm*(as*0.666)
+
+#Check ratio:
+ratio_66<-derm_adj_r/derm
+ratio_66$Family<-effects$Family #add family
+BCF_66_m<- ratio_66 %>% 
+  group_by(Family) %>%
+  summarise(across(dermdose1:dermdose1000, mean, na.rm = TRUE))
+print(rowMeans(BCF_66_m[2:1001]))
+
+####
 
 #format the dermal dose estimates and survival estimates to use in the BBMD app
 #should be in order with effects, so that each experiment N matches with each study
@@ -189,6 +246,9 @@ mean(mort_n_forpaper$Effect)
 #dose
 mean(BMDS_headline_fin$Dose)
 
+
+
+
 #### Glyphosate ----
 #note to self; specific column numbers will change depending on dataset
 effects<-read.csv('data_in/Glyphosate_updated.csv')
@@ -199,7 +259,7 @@ nsims<-1000
 #the duration for all of the glyphosate studies is already set to 96 hours; not need to calculate it using exponential growth curve
 effects$adj_sur_96<-effects$Survival
 print(names(effects))
-df_sig<-effects[,c(1,5,8,10,17)] #make sure this output matches
+df_sig<-effects[,c(1,5,9,11,18)] #make sure this output matches
 df_sig<-na.omit(df_sig)
 df_sig$mort<-round(df_sig$N_Exp - (df_sig$Survival*df_sig$N_Exp),0)
 df_sig$alive<-df_sig$N_Exp-df_sig$mort
@@ -269,7 +329,7 @@ by_s<-split(effects, list(effects$Study, effects$Species,effects$Application_Rat
 print(names(by_s[[19]]))
 
 bw_sim<-replicate(nsims,
-                  {normalize <- lapply(by_s, function(y) rlnorm(nrow(y), mean=y[[21]], sd=y[[22]]))
+                  {normalize <- lapply(by_s, function(y) rnorm(nrow(y), mean=y[[12]], sd=y[[13]]))
                   bw_sim<-as.data.frame(unlist(normalize))
                   })
 bw_sim<-do.call(cbind.data.frame, bw_sim)
@@ -322,6 +382,55 @@ derm<-as.data.frame(t(do.call(rbind.data.frame, my_list)))
 colnames(derm)<-paste0("dermdose",1:nsims,"")
 row.names(derm)<-NULL
 #outputs are in ugg
+
+
+fam<-as.data.frame(cbind(effects$Family, effects$Study))
+names(fam)<-c('Family', 'Study')
+mod_As<- merge(fam,mod, by  = "Family") 
+mod_As<-mod_As[order(mod_As$Study),]
+
+
+bw_sim_as<-bw_sim
+exp<-bw_sim_as^mod_As$Exponent 
+as<-mod_As$As_Modifyer*exp
+colnames(as)[1:nsims]<-names<-paste0("As",1:nsims,"")
+
+##100% of surface area 
+derm_adj_r<-derm*as
+
+#Check ratio:
+ratio_100<-derm_adj_r/derm
+ratio_100$Family<-effects$Family #add family
+BCF_100_m<- ratio_100 %>% 
+  group_by(Family) %>%
+  summarise(across(dermdose1:dermdose1000,mean, na.rm = TRUE))
+print(rowMeans(BCF_100_m[2:1001]))
+
+
+##50% of surface area
+derm_adj_r<-derm*(as/2)
+
+#Check ratio:
+ratio_50<-derm_adj_r/derm
+ratio_50$Family<-effects$Family #add family
+BCF_50_m<- ratio_50 %>% 
+  group_by(Family) %>%
+  summarise(across(dermdose1:dermdose1000, mean, na.rm = TRUE))
+print(rowMeans(BCF_50_m[2:1001]))
+
+##2/3 of surface area
+derm_adj_r<-derm*(as*0.666)
+
+#Check ratio:
+ratio_66<-derm_adj_r/derm
+ratio_66$Family<-effects$Family #add family
+BCF_66_m<- ratio_66 %>% 
+  group_by(Family) %>%
+  summarise(across(dermdose1:dermdose1000, mean, na.rm = TRUE))
+print(rowMeans(BCF_66_m[2:1001]))
+
+
+####
 
 #format the dermal dose estimates and survival estimates to use in the BBMD app
 #should be in order with effects, so that each experiment N matches with each study
