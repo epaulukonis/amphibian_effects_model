@@ -37,12 +37,12 @@ Cusaac_2017d,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,Bufonidae,96,Soil
 Cusaac_2017d,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,Bufonidae,96,Soil_Nb,1.52,ug a.i./cm2,0.84,0.79,0.075,NA,NA,10,3,30,
 Cusaac_2017d,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,Bufonidae,96,Soil_Nb,3.04,ug a.i./cm2,0.56,0.79,0.075,NA,NA,10,3,30,
 Cusaac_2017d,Juvenile,Lab,Pyraclostrobin_AMP,Anaxyrus cognatus,Bufonidae,96,Soil_Nb,6.08,ug a.i./cm2,0.3,0.79,0.075,NA,NA,10,3,30,240
-Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii ,Bufonidae,48,Overspray,0,ug a.i./cm2,1,0.45,0.034,NA,NA,,,75,
-Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,Hylidae,48,Overspray,0,ug a.i./cm2,0.75,0.49,0.025,NA,NA,,,42,
-Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii ,Bufonidae,48,Overspray,1.06,ug a.i./cm2,1,0.45,0.034,NA,NA,,,73,
-Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,Hylidae,48,Overspray,1.06,ug a.i./cm2,0.93,0.49,0.025,NA,NA,,,17,
-Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii ,Bufonidae,48,Overspray,1.52,ug a.i./cm2,1,0.45,0.034,NA,NA,,,77,
-Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,Hylidae,48,Overspray,1.52,ug a.i./cm2,0.97,0.49,0.025,NA,NA,,,36,
+Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii,Bufonidae,48,Overspray,0,ug a.i./cm2,1,0.45,0.034,NA,NA,NA,NA,75,
+Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,Hylidae,48,Overspray,0,ug a.i./cm2,0.75,0.49,0.025,NA,NA,NA,NA,42,
+Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii,Bufonidae,48,Overspray,1.06,ug a.i./cm2,1,0.45,0.034,NA,NA,NA,NA,73,
+Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,Hylidae,48,Overspray,1.06,ug a.i./cm2,0.93,0.49,0.025,NA,NA,NA,NA,17,
+Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Anaxyrus woodhousii,Bufonidae,48,Overspray,1.52,ug a.i./cm2,1,0.45,0.034,NA,NA,NA,NA,77,
+Cusaac_2015,Juvenile,Semi-Field,Pyraclostrobin_AMP,Acris blanchardi,Hylidae,48,Overspray,1.52,ug a.i./cm2,0.97,0.49,0.025,NA,NA,NA,NA,36,
 Bruhl_2013,Juvenile,Lab,Pyraclostrobin_Headline,Rana temporaria ,Ranidae,168,Overspray,0,ug a.i./cm2,0.93,0.96,0.25,21,2.31,10,4,40,
 Bruhl_2013,Juvenile,Lab,Pyraclostrobin_Headline,Rana temporaria ,Ranidae,168,Overspray,0.22,ug a.i./cm2,1,0.84,0.19,21,2.31,5,1,5,
 Bruhl_2013,Juvenile,Lab,Pyraclostrobin_Headline,Rana temporaria ,Ranidae,168,Overspray,2.2,ug a.i./cm2,0,1.02,0.25,21,2.31,3,1,3,48
