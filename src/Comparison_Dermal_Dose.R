@@ -3,6 +3,7 @@ library(tidyr)
 library(ggplot2)
 library(ggridges)
 library(cowplot)
+library(ggrepel)
 
 ##Script for comparison of field and lab-based tissue concentrations to estimated tissue-based concentrations
 lab_bb<-read.csv('data_in/lab_bb.csv')#should be 1158
@@ -67,7 +68,8 @@ ggplot(strob_l, aes(y = species)) +
 
 
 names(effectsp)
-pyra_est<-effectsp[,c(1,5:6,8,11,21)]
+pyra_est<-effectsp[,c(1,5,7,8,9,23)]
+names(pyra_est)
 
 names(strob_l)
 names(pyra_est)
@@ -83,15 +85,16 @@ ggplot(pyra_est_lowdose, aes(x = dermaldose, y = Application_Rate, colour=Applic
   geom_point()
 
 
-strob_l_est<-strob_l[c(10,11,5,14,3,12)] #get in format like the pyralcostrobin dataset
+strob_l_est<-strob_l[c(10,11,5,2,1,12)] #get in format like the pyralcostrobin dataset
 names(strob_l_est)<-names(pyra_est)
 
 strob_data<-rbind(pyra_est,strob_l_est)
 strob_data$half_life<-(strob_data$Duration_h*log(2))/log(1/strob_data$dermaldose) #need to modify survival by duration, using an exponential growth curve
 strob_data$adj_dermaldose<-round(1/(2^(96/strob_data$half_life)),3)
+strob_data[29:37,8]<-strob_data[29:37,6]
 
 studynames<-c("Belden et al. 2010", "Bruhl et al. 2013", "Cusaac et al. 2015", "Cusaac et al. 2016a", "Cusaac et al. 2016b",
-              "Cusaac et al. 2017a","Cusaac et al. 2017b", "Cusaac et al. 2017c", "Cusaac et al. 2017d", "Glinski et al. 2020 - trifloxystrobin")
+              "Cusaac et al. 2017b", "Cusaac et al. 2017c", "Cusaac et al. 2017d", "Glinski et al. 2020 - trifloxystrobin")
 
 colorBlindGrey8   <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
                        "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#762a83", "#000000","#7fbc41")
@@ -115,7 +118,84 @@ p
 
 
 
-#### toxicity data
+
+####plot body weight ~ mortality
+
+studynames<-c("Belden et al. 2010", "Bruhl et al. 2013", "Cusaac et al. 2015", "Cusaac et al. 2016a", "Cusaac et al. 2016b",
+              "Cusaac et al. 2017b", "Cusaac et al. 2017c", "Cusaac et al. 2017d")
+
+
+#pyraclostrobin
+pp<-ggplot(effectsp, aes(x = M_Body_Weight_g, y = Mortality, colour=Study, label=Application_Rate))+
+  geom_point()+
+  geom_text_repel(size=4, size=6, box.padding = unit(0.5, "lines") )+
+  scale_colour_manual(labels =  studynames, values=colorBlindGrey8)+
+  ylab("Mortality") +
+  xlab("Body Weight (g)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16),
+        legend.title= element_text(size=14, 
+                                   face="bold"))
+pp
+
+#glyphosate
+studynames<-c("Bernal et al. 2009", "Meza-Joya et al. 2013")
+pg<-ggplot(effectsg, aes(x = Body_Weight_g, y = Mortality, colour=Study, label=Application_Rate))+
+  geom_point()+
+  geom_text_repel(size=4, size=6, box.padding = unit(0.5, "lines") )+
+  scale_colour_manual(labels =  studynames, values=colorBlindGrey8)+
+  ylab("Mortality") +
+  xlab("Body Weight (g)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16),
+        legend.title= element_text(size=14, 
+                                   face="bold"))
+pg
+
+mean(effectsg$Body_Weight_g)
+sd(effectsg$Body_Weight_g)
+min(effectsg$Body_Weight_g)
+max(effectsg$Body_Weight_g)
+
+ex<-effectsg %>% filter(Application_Rate == 73.8)
+ex<-ex[order(ex$Body_Weight_g),]
+
+plot(ex$Mortality ~ ex$Body_Weight_g)
+ex$Mortality
+ex$Body_Weight_g
+
+
+# pr<-ggplot(effectsg, aes(x = dermal_dose, y = Mortality, colour=Study))+
+#   geom_point()+
+#   scale_colour_manual(labels =  studynames, values=colorBlindGrey8)+
+#   ylab("Mortality") +
+#   xlab("Tissue Concentration (ug/g)")+
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+#         axis.text.y = element_text(size=12, face='bold'),
+#         axis.title.x = element_text(size=14, face='bold'),
+#         axis.title.y = element_text(size=14, face='bold'),
+#         plot.title = element_text(face = 'bold', size = 16),
+#         legend.title= element_text(size=14, 
+#                                    face="bold"))
+# pr
+# 
+
+
+grid.arrange(pp,pg, nrow = 2, ncol = 1)
+
+#### toxicity data####
 # pyraclostrobin
 effectsp<-read.csv('data_in/Headline_updated.csv')
 param<-read.csv('data_in/parameters.csv')
@@ -165,11 +245,11 @@ effectsg$dermaldose<-dermal_dose
 effectsg$Mortality<-1-effectsg$adj_sur_96
 
 
-
+###Note: I don't like this look, so we are going to attempt to combine field and lab
 field<-ggplot(pyra_f, aes(y = Species)) +
   geom_density_ridges(aes(x=tissue,fill=paste(Species)), stat = "binline", bins = 50, scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
-  scale_x_continuous(expand=c(0,0), limits=c(-0.01,.25)) +
+  scale_x_continuous(expand=c(0,0), limits=c(-0.01,20)) +
   coord_cartesian(clip = "off") +
   ylab("Species") +
   xlab("Tissue Concentration (ug/g)")+
@@ -178,8 +258,8 @@ field<-ggplot(pyra_f, aes(y = Species)) +
 field
 
 
-lab<-ggplot(lab_bb, aes(y = species)) +
-  geom_density_ridges(aes(x=tissue_conc_ugg,fill=paste(species)),stat = "binline", bins = 50,scale = 1.5) +
+lab<-ggplot(effectsp, aes(y = Species)) +
+  geom_density_ridges(aes(x=dermaldose,fill=paste(Species)),stat = "binline", bins = 50,scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
   coord_cartesian(clip = "off") +
@@ -194,7 +274,18 @@ lab<-ggplot(lab_bb, aes(y = species)) +
   theme_ridges()
 lab
 
-est<-ggplot(effectsg, aes(y = Species)) +
+
+##combine field and on plot
+names(effectsp)
+names(pyra_f)
+pyra_f_p<-pyra_f[,c(3,7)]
+pyra_e_p<-effectsp[,c(23,5)]
+
+names(pyra_f_p)<-names(pyra_e_p)
+pyra<-rbind(pyra_f_p,pyra_e_p)
+names(pyra)
+
+pp<-ggplot(pyra, aes(y = Species)) +
   geom_density_ridges(aes(x=dermaldose,fill=paste(Species)),stat = "binline", bins = 50,scale = 1.5) +
   scale_y_discrete(expand = c(0, 0)) +
   scale_x_continuous(expand = c(0, 0)) +
@@ -208,9 +299,9 @@ est<-ggplot(effectsg, aes(y = Species)) +
   #       legend.text = element_text( size=12, face="bold"),
   #       )+
   theme_ridges()
-est
+pp
 
 
 
-plot_grid(field,calc)
+
 #plot_grid(field,calc, labels = c('Field Body Burdens', 'Calculated Body Burdens'), label_size = 12)

@@ -17,8 +17,12 @@ library(bayestestR)
 library(dplyr)
 library(tidyverse)
 library(cowplot)
+
+
+
 setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
 #load('myEnvironment_analysis.RData')
+
 
 ##this script contains plot and data analysis for the BMDS MCMC outputs
 #all plots here are part of the manuscript
@@ -27,7 +31,7 @@ setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profil
 
 
 #### Pyraclostrobin Analysis ----
-sims<-read.csv('data_out/BMDS_headline_fin_132022.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+sims<-read.csv('data_out/BMDS_headline_fin_32122.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
@@ -70,6 +74,12 @@ colnames(bmds)[2]<-'BMDSEstimates'
 bmds$order<-bmds_order
 bmds$Model<-'ModelAverage'
 
+#get bmds average
+tab_bmds<-bmds%>%
+  group_by(order) %>% 
+  summarize(med=median(BMDSEstimates), SD=sd(BMDSEstimates))
+tab_bmds
+
 
 #run mcmc over top 3 models
 mcmc_ll<- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type = "probit",fit_type = "mcmc"))
@@ -84,9 +94,13 @@ mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],mode
 # plot(mcmc_ll$exp_n1)
 # df<-mcmc_ll$exp_n1
 # plot(test$V1~test$V2) #doesn't seem to be original plot; goes above 0.5 (plotly plot doesn't)
-plot(mcmc_ma$exp_n1)
-plot(mcmc_ma$exp_n1$Individual_Model_2)
+plot(mcmc_ma$exp_n500)
+plot(mcmc_ma$exp_n1$Individual_Model_1)
 
+ggplot_fit<-plot(mcmc_ma$exp_n500)
+ggplot_fit + scale_x_continuous(trans = "pseudo_log") + theme_classic()
+
+MAdensity_plot(mcmc_ma$exp_n1)+ggtitle("Density Plot MCMC")
 
 #organize and put outputs in dataframe
 ll<-lapply(mcmc_ll, function (x) x['bmd'])
@@ -118,10 +132,12 @@ write.csv(bmds_est,'data_out/BMDS_headline_top3.csv')
 
 
 ##### Glyphosate Analysis ----
-sims<-read.csv('data_out/BMDS_glyphosate_fin_132022.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+sims<-read.csv('data_out/BMDS_glyphosate_fin_32122.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
-mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
+mcmc_ma_g = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
+
+
 
 
 ##first nested level of function output
@@ -155,7 +171,7 @@ write.csv(tab_med,'data_out/BMDS_posteriorweight_median_glyphosate.csv')
 #pull model average BMD, bmdl, bmdu
 bmdsorder<-c('bmds','bmdl','bmdu')
 bmds_order<-rep(bmdsorder, times=1000)
-bmds<-lapply(mcmc_ma, function (x) x['bmd']) #pull out bmds and bmdls
+bmds<-lapply(mcmc_ma_g, function (x) x['bmd']) #pull out bmds and bmdls
 bmds<-as.data.frame(unlist(bmds))
 bmds<-tibble::rownames_to_column(bmds, "Simulation")
 bmds$Simulation = substr(bmds$Simulation,1,nchar(bmds$Simulation)-1)
@@ -164,8 +180,11 @@ bmds$order<-bmds_order
 bmds$Model<-'ModelAverage'
 
 
-bmds_bmd<-bmds[bmds$order == 'bmds',]
-mean(bmds_bmd$BMDSEstimates)
+#get bmds average
+tab_bmds<-bmds%>%
+  group_by(order) %>% 
+  summarize(med=median(BMDSEstimates), SD=sd(BMDSEstimates))
+tab_bmds
 
 
 #run mcmc over top 3 models
@@ -182,8 +201,11 @@ mcmc_q <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],mode
 # plot(mcmc_ll$exp_n1)
 # df<-mcmc_ll$exp_n1
 # plot(test$V1~test$V2) #doesn't seem to be original plot; goes above 0.5 (plotly plot doesn't)
-plot(mcmc_ma$exp_n100)
-plot(mcmc_ma$exp_n1$Individual_Model_1)
+
+ggplot_fit<-plot(mcmc_ma_g$exp_n1)
+ggplot_fit + scale_x_continuous(trans = "pseudo_log") + theme_classic()
+
+MAdensity_plot(mcmc_ma$exp_n1)+ggtitle("Density Plot MCMC")
 
 
 #organize and put outputs in dataframe
@@ -218,12 +240,13 @@ write.csv(bmds_est,'data_out/BMDS_headline_top3.csv')
 ############################Plots---- 
 #toxicity data
 
+mod<-read.csv('data_in/As_Modifier.csv')
+
 # pyraclostrobin
 effectsp<-read.csv('data_in/Headline_updated.csv')
 param<-read.csv('data_in/parameters.csv')
 effectsp$half_life<-(effectsp$Duration_h*log(2))/log(1/effectsp$Survival) #need to modify survival by duration, using an exponential growth curve
 effectsp$adj_sur_96<-round(1/(2^(96/effectsp$half_life)),3)
-
 pmolweight<-387.8 #g/mol #comptox
 plogKow<- 4.44 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
@@ -235,20 +258,37 @@ dsa<-param[9,2]*effectsp$M_Body_Weight_g^param[9,2]
 derm_frac<-param[11,2]
 soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
 soil_concs<-((effectsp$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
-
 #this calculates dermal dose 
 dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effectsp$M_Body_Weight_g
 head(dermal_dose) #take a look
 effectsp$dermaldose<-dermal_dose
 effectsp$Mortality<-1-effectsp$adj_sur_96
+effectsp <-effectsp[order(effectsp$Study),]
 
+
+fam<-as.data.frame(cbind(effectsp$Family, effectsp$Study, effectsp$Application_Rate))
+names(fam)<-c('Family', 'Study', "Application")
+mod_As<- merge(fam,mod, by  = "Family") 
+mod_As<-mod_As[order(mod_As$Study),]
+
+#adjust with modifier
+bw_effect<-effectsp$M_Body_Weight_g
+exp<-bw_effect^mod_As$Exponent 
+as<-mod_As$Modifier*exp
+derm_d<-effectsp[c(1:39),23] #only do the direct exposures
+app_d<-effectsp[c(1:39),9] #only do the direct exposures
+as<-as[1:39] #only do the direct exposures
+derm_original<-derm_d*((as*as.numeric(app_d))/2) #modify the calculated dermal dose by the SA and application rate product
+derm_original<-c(derm_original,effectsp[c(40:47),23]) 
+effectsp$dermaldose<-derm_original
+
+#note; this is with no distinction between the zero doses and dropped experiments; 47 records
 
 
 # glyphosate
 effectsg<-read.csv('data_in/Glyphosate_updated.csv')
 param<-read.csv('data_in/parameters.csv')#need to modify survival by duration, using an exponential growth curve
 effectsg$adj_sur_96<-effectsg$Survival
-
 pmolweight<-169.1 #g/mol #comptox
 plogKow<- -3.12 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
@@ -260,12 +300,20 @@ dsa<-param[9,2]*effectsg$Body_Weight_g^param[9,2]
 derm_frac<-param[11,2]
 soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
 soil_concs<-((effectsg$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
-
 #this calculates dermal dose 
 dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effectsg$Body_Weight_g
 head(dermal_dose) #take a look
 effectsg$dermaldose<-dermal_dose
 effectsg$Mortality<-1-effectsg$adj_sur_96
+
+bw_effect<-effects$Body_Weight_g
+exp<-bw_effect^mod_As$Exponent 
+as_d<-mod_As$Modifier*exp
+derm_d<-effects$dermaldose 
+app_d<-as.numeric(effects$Application_Rate)
+derm_original<-derm_d*((as_d*app_d)/2)
+
+effectsg$dermaldose<-derm_original
 
 
 #combine both datasets
@@ -277,7 +325,8 @@ effectsg$Mortality<-1-effectsg$adj_sur_96
 # Figure 3: KDEs of BMDs across top 3 models
 # Figure 4: DR curve for top 3 models and 95% credibility interval + median, plotted with original dataset
 
-
+#run pyraclostrobin in Data_Simulation.R
+effectsp<-effects
 effectsp$label<-paste(effectsp$Study, effectsp$Species, sep="")
 effectsp <-effectsp[order(effectsp$label),]
 unique(effectsp$label) # get unique combos of study and species
@@ -315,7 +364,8 @@ pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, colour=label,shape=label)) +
         #legend.position = 'none') #first run without this to get legend
 pp
 
- 
+#next, run glyphosate in Data_Simulation.R
+effectsg<-effects 
 effectsg$label<-paste(effectsg$Study, effectsg$Species, sep="")
 effectsg <-effectsg[order(effectsg$label),]
 unique(effectsg$label) # get unique combos of study and species

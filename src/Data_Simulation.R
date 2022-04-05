@@ -91,7 +91,7 @@ effects<-rbind(effects,control)
 min(effects$M_Body_Weight_g)
 max(effects$M_Body_Weight_g)
 min(effects$SD)
-min(effects$SD)
+max(effects$SD)
 effects <-effects[order(effects$Study),]
 
 
@@ -114,7 +114,7 @@ colnames(bw_sim)[1:nsims]<-names<-paste0("BW",1:nsims,"")
 
 
 
-###survival
+###Survival
 #simulate survival using a binomial distribution with modified duration
 survival_sim <- matrix(data=NA,nrow=nrow(effects),ncol=nsims)
 colnames(survival_sim)[1:nsims]<-paste0("Sur",1:nsims,"")
@@ -227,7 +227,7 @@ as<-mod_As$Modifier*exp
 
 # 50% SA
 derm_d<-effects[c(1:23),23] #only do the direct exposures
-app_d<-mod_As[c(1:23),3] #only do the direct exposures
+app_d<-effects[c(1:23),9] #only do the direct exposures
 as<-as[1:23] #only do the direct exposures
 derm_original<-derm_d*((as*as.numeric(app_d))/2) #modify the calculated dermal dose by the SA and application rate product
 derm_original<-c(derm_original,effects[c(24:29),23]) #combine back together again
@@ -240,10 +240,14 @@ TCR_org_50_r<- TCR_org_50 %>%
   summarise(TCR_r = mean(TCR))
 print(TCR_org_50_r$TCR_r)
 print(TCR_org_50_r$Family)
+ 
+effects$dermaldose<-derm_original
 
-plot(derm_original ~ effects$M_Body_Weight_g) 
+plot(derm_original ~ effects$Application_Rate) 
 print(mean(derm_original))
 sd(derm_original)
+
+
 
 
 
@@ -278,7 +282,7 @@ colnames(as)[1:nsims]<-names<-paste0("As",1:nsims,"")
 
 ##50% of surface area
 derm_d<-derm[c(1:23),] #direct exposures
-app_d<-mod_As[c(1:23),3] #direct exposures
+app_d<-effects[c(1:23),9] #direct exposures
 as_d<-as[c(1:23),] #direct exposures
 derm_adj_r<-derm_d*((as_d*as.numeric(app_d))/2) # this is the calculated dermal dose times the exposed surface area
 derm_adj_r<-rbind(derm_adj_r,derm[c(24:29),])
@@ -507,7 +511,7 @@ as_d<-mod_As$Modifier*exp
 
 # 50% SA
 derm_d<-effects$dermaldose 
-app_d<-as.numeric(mod_As$Application)
+app_d<-as.numeric(effects$Application_Rate)
 derm_original<-derm_d*((as_d*app_d)/2) #modify the calculated dermal dose by the SA and application rate product
 TCR_org_50<-as.data.frame(derm_original/effects$dermaldose) #this calculates the ratio between the direct (overspray) and indirect (soil)
 names(TCR_org_50)<-"TCR"
@@ -519,7 +523,9 @@ TCR_org_50_r<- TCR_org_50 %>%
 print(TCR_org_50_r$TCR_r)
 print(TCR_org_50_r$Family)
 
-plot(derm_original ~ effects$M_Body_Weight_g) 
+effects$dermaldose<-derm_original
+
+plot(derm_original ~ effects$Body_Weight_g) 
 print(mean(derm_original))
 sd(derm_original)
 mean(effects$Mortality)
@@ -529,7 +535,7 @@ mean(effects$Mortality)
 bw_sim_as<-bw_sim
 exp<-bw_sim_as^mod_As$Exponent 
 as_d<-mod_As$Modifier*exp
-colnames(as)[1:nsims]<-names<-paste0("As",1:nsims,"")
+colnames(as_d)[1:nsims]<-names<-paste0("As",1:nsims,"")
 
 ##50% of surface area
 derm_adj_r<-derm*((as_d*as.numeric(app_d))/2) # this is the calculated dermal dose times the exposed surface area
