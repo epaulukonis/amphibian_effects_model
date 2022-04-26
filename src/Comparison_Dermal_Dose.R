@@ -126,12 +126,12 @@ studynames<-c("Belden et al. 2010", "Bruhl et al. 2013", "Cusaac et al. 2015", "
 
 
 #pyraclostrobin
-pp<-ggplot(effectsp, aes(x = M_Body_Weight_g, y = Mortality, colour=Study, label=Application_Rate))+
+pp<-ggplot(effectsp, aes(x = Application_Rate, y = Mortality, colour=Study, label=M_Body_Weight_g))+
   geom_point()+
-  geom_text_repel(size=4, size=6, box.padding = unit(0.5, "lines") )+
+  geom_text_repel(size=4, size=6, box.padding = unit(0.7, "lines") )+
   scale_colour_manual(labels =  studynames, values=colorBlindGrey8)+
   ylab("Mortality") +
-  xlab("Body Weight (g)")+
+  xlab("Application Rate(g)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -141,7 +141,7 @@ pp<-ggplot(effectsp, aes(x = M_Body_Weight_g, y = Mortality, colour=Study, label
         plot.title = element_text(face = 'bold', size = 16),
         legend.title= element_text(size=14, 
                                    face="bold"))
-pp
+pp 
 
 #glyphosate
 studynames<-c("Bernal et al. 2009", "Meza-Joya et al. 2013")

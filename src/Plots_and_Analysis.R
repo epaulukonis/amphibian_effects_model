@@ -18,6 +18,7 @@ library(dplyr)
 library(tidyverse)
 library(cowplot)
 
+set.seed(6379)
 
 
 setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
@@ -37,12 +38,17 @@ mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinea
 mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
 
 
+
 ##first nested level of function output
-mcmc_ma$exp_n1$ma_bmd
+output<-mcmc_ma$exp_n500$ma_bmd
+
+
+plot(output)
+plot(mcmc_ma$exp_n1)
 #ma_bmd -  cdf of the BMD? first used to calculate the CL of the bmd 
 mcmc_ma$exp_n1$bmd
 #median bmd, bmdl, bmdu
-mcmc_ma$exp_n1$posterior_probs
+mcmc_ma$exp_n1$p
 #prob weights for all models
 
 ##second nested level of function output
@@ -306,11 +312,11 @@ head(dermal_dose) #take a look
 effectsg$dermaldose<-dermal_dose
 effectsg$Mortality<-1-effectsg$adj_sur_96
 
-bw_effect<-effects$Body_Weight_g
+bw_effect<-effectsg$Body_Weight_g
 exp<-bw_effect^mod_As$Exponent 
 as_d<-mod_As$Modifier*exp
-derm_d<-effects$dermaldose 
-app_d<-as.numeric(effects$Application_Rate)
+derm_d<-effectsg$dermaldose 
+app_d<-as.numeric(effectsg$Application_Rate)
 derm_original<-derm_d*((as_d*app_d)/2)
 
 effectsg$dermaldose<-derm_original
@@ -326,7 +332,6 @@ effectsg$dermaldose<-derm_original
 # Figure 4: DR curve for top 3 models and 95% credibility interval + median, plotted with original dataset
 
 #run pyraclostrobin in Data_Simulation.R
-effectsp<-effects
 effectsp$label<-paste(effectsp$Study, effectsp$Species, sep="")
 effectsp <-effectsp[order(effectsp$label),]
 unique(effectsp$label) # get unique combos of study and species
@@ -353,6 +358,7 @@ pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, colour=label,shape=label)) +
   ggtitle("Adjusted 96hr Mortality vs. Calculated Dermal Dose, Pyaclostrobin") +
   ylab("Mortality") +
   xlab("Tissue Concentration (ug/g)")+
+  #scale_x_continuous(limits = c(0, 50))+
   #scale_color_manual(values='#2ca25f')+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
@@ -365,7 +371,6 @@ pp<-ggplot(effectsp, aes(x=dermaldose, y=Mortality, colour=label,shape=label)) +
 pp
 
 #next, run glyphosate in Data_Simulation.R
-effectsg<-effects 
 effectsg$label<-paste(effectsg$Study, effectsg$Species, sep="")
 effectsg <-effectsg[order(effectsg$label),]
 unique(effectsg$label) # get unique combos of study and species
@@ -401,22 +406,12 @@ pg<-ggplot(effectsg, aes(x=dermaldose, y=Mortality, color=label, shape =  label)
 
 pg
 
-
 grid.arrange(pp,pg, nrow = 2, ncol = 1)
 
 
-#Figure 2 - plot of posterior probability weights across 9 models 
-ggplot(postw, aes(x = PosteriorProbs, y = Model, group = Model, fill = Model)) +
-  geom_density_ridges(stat = "binline", bins = 100, scale = 1.5) +
-  scale_y_discrete(expand = c(0, 0)) +
-  scale_x_continuous(expand = c(0, 0)) +
-  coord_cartesian(clip = "off") +
-  ylab("Model") +
-  xlab("Posterior Probability by Model for 1000 Simulated Studies")+
-  theme_ridges()
 
 
-#Figure 3 - KDE of benchmark doses 
+#Figure 3 - KDE of all benchmark doses 
 ggplot(bmds_est, aes(y = Model)) +
   geom_density_ridges(aes(x=BMDSEstimates, fill = order), 
                       stat = "binline", bins = 100, scale = 0.9,
@@ -451,6 +446,18 @@ colnames(derm_seq)[1]<-'dermdose'
 
 
 save.image(file='myEnvironment_analysis.RData') 
+
+
+
+#Figure X - plot of posterior probability weights across 9 models 
+# ggplot(postw, aes(x = PosteriorProbs, y = Model, group = Model, fill = Model)) +
+#   geom_density_ridges(stat = "binline", bins = 100, scale = 1.5) +
+#   scale_y_discrete(expand = c(0, 0)) +
+#   scale_x_continuous(expand = c(0, 0)) +
+#   coord_cartesian(clip = "off") +
+#   ylab("Model") +
+#   xlab("Posterior Probability by Model for 1000 Simulated Studies")+
+#   theme_ridges()
 
 
 #Andy extra analysis----
