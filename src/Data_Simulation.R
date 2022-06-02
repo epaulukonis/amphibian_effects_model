@@ -7,7 +7,7 @@ library(DescTools)
 library(reshape2)
 setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
 
-
+options(scipen=999)
 
 # we run through the analysis and simulation with Pyraclostrobin and Glyphosate
 # evaluating statistical significance using cochran-armitage test (Neurhauser et al. 1999)
@@ -101,6 +101,7 @@ effects <-effects[order(effects$Study),]
 
 #Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
 by_s<-split(effects, list(effects$Study,effects$Species,effects$Application_Rate), drop=T) #split by study, species, application rate use SE
+
 by_s<-by_s[order(names(by_s))]
 print(names(by_s[[1]]))
 
@@ -309,7 +310,7 @@ print(TCR_50_r$Family)
 # as_r<-9.97*exp
 # plot(as_r~effects$M_Body_Weight_g)
 # 
-# #rana
+# #hyla
 # exp<-bw_effect^0.729
 # as_r<-9.099*exp
 # plot(as_r~effects$M_Body_Weight_g)
@@ -410,8 +411,8 @@ weight_mean<-function(data,vector,weight){
 control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survival
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
-effects<-rbind(effects,control)
 effects<-na.omit(effects)
+effects<-rbind(control,effects)
 effects <-effects[order(effects$Study),]
 
 
@@ -423,8 +424,10 @@ effects$bw_sd<-sqrt(log(1 + (effects$SD^2 / effects$Body_Weight_g^2)))
 
 ##let's bootstrap some data based on our original dataset
 #Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
-by_s<-split(effects, list(effects$Study, effects$Species,effects$Application_Rate), drop=T) #split by study, species, application rate
+by_s<-split(effects, list(effects$Application_Rate, effects$Species, effects$Study), drop=T) #split by study, species, application rate
+#by_s<-by_s[order(names(by_s))]
 print(names(by_s[[19]]))
+
 
 bw_sim<-replicate(nsims,
                   {normalize <- lapply(by_s, function(y) rlnorm(nrow(y), mean=y[[22]], sd=y[[23]]))
@@ -433,7 +436,8 @@ bw_sim<-replicate(nsims,
 bw_sim<-do.call(cbind.data.frame, bw_sim)
 colnames(bw_sim)[1:nsims]<-names<-paste0("BW",1:nsims,"")
 
-#simulate survival using a binomial distribution with modified duration
+
+#simulate survival using a binomial distribution with modified duration  ##survival ok 5/31
 print(names(effects))
 survival_sim <- matrix(data=NA,nrow=nrow(effects),ncol=nsims)
 colnames(survival_sim)[1:nsims]<-paste0("Sur",1:nsims,"")
@@ -444,6 +448,9 @@ for(i in 1:nrow(effects)){
 }
 survival_sim<-as.data.frame(survival_sim)
 
+#check
+effects$Survival
+survival_sim$Sur1
 
 #simulate the exposure parameters from Purucker et al. 2021
 exposure_sims <- matrix(data=NA,nrow=nsims,ncol=6)
@@ -507,7 +514,6 @@ effects$Mortality<-1-effects$adj_sur_96
 bw_effect<-effects$Body_Weight_g
 exp<-bw_effect^mod_As$Exponent 
 as_d<-mod_As$Modifier*exp
-
 
 # 50% SA
 derm_d<-effects$dermaldose 
@@ -588,3 +594,4 @@ sd(BMDS_glyphosate_fin$Dose)
 
 
 
+max(effects$dermaldose)

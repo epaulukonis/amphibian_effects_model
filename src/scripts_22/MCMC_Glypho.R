@@ -1,10 +1,3 @@
-### April 2022 Analysis
-
-###Evaluating MCMC MA runs, and pulling out 'top' model using BMD
-
-
-###5/25/22 USE LAPLACE CAUSE THE ALPHA IS WEIRD
-
 library(Rcpp)
 library(RcppGSL)
 library(RcppEigen)
@@ -29,16 +22,16 @@ set.seed(6379)
 setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
 
 #simulated datasets
-sims<-read.csv('data_out/BMDS_headline_fin_32122.csv') #read in the compiled simulation data from 'Data_Simulation.R'
+sims<-read.csv('data_out/BMDS_glyphosate_fin_32122.csv') #read in the compiled simulation data from 'Data_Simulation.R'
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
 
+
+
 ##og dataset
-effects<-read.csv('data_in/Headline_updated.csv') #run code in Data_Sim to clean up the effects and remove rows we don't want
+effects<-effects<-read.csv('data_in/Glyphosate_updated.csv') #run code in Data_Sim to clean up the effects and remove rows we don't want
 mod<-read.csv('data_in/As_Modifier.csv')
 param<-read.csv('data_in/parameters.csv')
 
-####OG MA analysis----
-# 
 # mod_list<-sort(c('hill','log-logistic','logistic','log-probit','weibull','qlinear','probit','multistage','gamma')) #order the models by name
 # mcmc_ma = lapply(by_s, function(y) ma_dichotomous_fit(y[,2],y[,4],y[,3], fit_type = "mcmc")) #apply ma function over list
 # 
@@ -53,46 +46,46 @@ param<-read.csv('data_in/parameters.csv')
 # #look at median of PW across all models 
 # tab_med<-postw %>%
 #   group_by(Model) %>% 
-#   summarize(med=median(PosteriorProbs))
-# print(tab_med)
+#  summarize(med=median(PosteriorProbs))
+#  print(tab_med)
 #write.csv(tab_med,'data_out/BMDS_posteriorweight_median_headline.csv')
-
-##the log-logistic has the highest posterior probability weight
-
+ 
+ #gamma 
 
 ##here we model the ll model (top)
 #model the log-logistic single model using the simulated sets
-ll_fit <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type="log-logistic",fit_type="laplace"))
+gam_fit <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type="gamma",fit_type="laplace"))
+
+## fit og glyphosate data ----
+#the duration for all of the glyphosate studies is already set to 96 hours; not need to calculate it using exponential growth curve
+effects$adj_sur_96<-effects$Survival
+print(names(effects))
+df_sig<-effects[,c(1,5,9,11,18)] #make sure this output matches
+df_sig<-na.omit(df_sig)
+df_sig$mort<-round(df_sig$N_Exp - (df_sig$Survival*df_sig$N_Exp),0)
+df_sig$alive<-df_sig$N_Exp-df_sig$mort
+head(df_sig)
+#split data into list by study/species for cochran armitage trend test
+by_s_stat<-split(df_sig, list(df_sig$Study, df_sig$Species), drop=T)
+by_s_stat<-lapply(by_s_stat, function (x) x[c('Application_Rate','mort','alive')]) 
+
+#change format to matrix to run CA trend test to test for trends in increasing significance
+ch0=list()
+for (i in seq_along(by_s_stat)) {
+  a=t(by_s_stat[[i]])
+  colnames(a)<-a[1,]
+  a<-a[c(3,2),] #need to have no mort first row, mort second
+  row.names(a)<-c(0,1)
+  a<-as.matrix(a)
+  ch0[[i]]<-a
+}
+
+#run CA test over matrix list; format needs to match format in ?Cochran-Armitage 'dose' ex
+CA_increasing_trend<-lapply(ch0,function(x) CochranArmitageTest(x,'increasing')) 
+CA_increasing_trend
+#none fail to reject the null hypothesis for glyphosate 
 
 
-#pull model average BMD, bmdl, bmdu
-bmdsorder<-c('bmds','bmdl','bmdu')
-bmds_order<-rep(bmdsorder, times=1000)
-bmds<-lapply(ll_fit, function (x) x['bmd']) #pull out bmds and bmdls
-bmds<-as.data.frame(unlist(bmds))
-bmds<-tibble::rownames_to_column(bmds, "Simulation")
-bmds$Simulation = substr(bmds$Simulation,1,nchar(bmds$Simulation)-1)
-colnames(bmds)[2]<-'BMDSEstimates'
-bmds$order<-bmds_order
-bmds$Model<-'log_logistic'
-
-#get parameters 
-para<-lapply(ll_fit, function (x) x['parameters'])
-para<-as.data.frame(unlist(para))
-para<-tibble::rownames_to_column(para, "Exp")
-colnames(para)[2]<-'Value'
-para_list_f<-rep(c("p1","p2","p3"), times=1000)
-para$Parameters<-para_list_f
-
-
-## fit og pyraclostrobin data ----
-#first modify so that the survival is adjusted for 96 hours across all studies
-effects$half_life<-(effects$Duration_h*log(2))/log(1/effects$Survival) #need to modify survival by duration, using an exponential growth curve
-effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
-effects_sub<-effects[(effects$Study =='Cusaac_2015' & effects$Species == 'Anaxyrus woodhousii'),]
-effects<-effects[!(effects$Study == 'Cusaac_2017a' | effects$Study == 'Cusaac_2015'), ] 
-effects<-rbind(effects,effects_sub)
-effects<-effects[order(effects$Study),]
 #group by study, species, and application rate
 effects<-effects %>%
   group_by(Study) %>% #study
@@ -111,38 +104,49 @@ control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survi
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
 effects<-rbind(effects,control)
+effects<-na.omit(effects)
 
-
-#then, format modifier DF
 fam<-as.data.frame(cbind(effects$Family, effects$Study, effects$Application_Rate))
 names(fam)<-c('Family', 'Study', "Application")
 mod_As<- merge(fam,mod, by  = "Family") 
 mod_As<-mod_As[order(mod_As$Study),]
 
-#this is for the in-house dermal doses, we'll calculate it this way:
-pmolweight<-387.8 #g/mol #comptox
-plogKow<- 4.44 #comptox
+
+pmolweight<-169.1 #g/mol #comptox
+plogKow<- -3.12 #comptox
 kp_pyra =  10^(-2.72+(0.71*plogKow)-(0.0061*pmolweight))
-hl<-4.91*24 #from comptox profile
+hl<-4.46*24 #from comptox profile
 dt<-param[1,2]
 move_rate<-param[3,2]
 bioavail<-param[5,2]
-dsa<-param[9,2]*effects$M_Body_Weight_g^param[9,2] 
+dsa<-param[9,2]*effects$Body_Weight_g^param[9,2] 
 derm_frac<-param[11,2]
 soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
 soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
-dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effects$M_Body_Weight_g
+dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effects$Body_Weight_g
 head(dermal_dose) #take a look
 effects$dermaldose<-dermal_dose
 effects$Mortality<-1-effects$adj_sur_96
-bw_effect<-effects$M_Body_Weight_g
+
+bw_effect<-effects$Body_Weight_g
 exp<-bw_effect^mod_As$Exponent 
-as<-mod_As$Modifier*exp
-derm_d<-effects[c(1:23),23] #only do the direct exposures
-app_d<-effects[c(1:23),9] #only do the direct exposures
-as<-as[1:23] #only do the direct exposures
-derm_original<-derm_d*((as*as.numeric(app_d))/2) #modify the calculated dermal dose by the SA and application rate product
-derm_original<-c(derm_original,effects[c(24:29),23])
+as_d<-mod_As$Modifier*exp
+
+
+# 50% SA
+derm_d<-effects$dermaldose 
+app_d<-as.numeric(effects$Application_Rate)
+derm_original<-derm_d*((as_d*app_d)/2) #modify the calculated dermal dose by the SA and application rate product
+TCR_org_50<-as.data.frame(derm_original/effects$dermaldose) #this calculates the ratio between the direct (overspray) and indirect (soil)
+names(TCR_org_50)<-"TCR"
+TCR_org_50$Family<-effects$Family #add family
+TCR_org_50<-na.omit(TCR_org_50)
+TCR_org_50_r<- TCR_org_50 %>% 
+  group_by(Family) %>%
+  summarise(TCR_r = mean(TCR))
+print(TCR_org_50_r$TCR_r)
+print(TCR_org_50_r$Family)
+
 effects$dermaldose<-derm_original
 
 names(effects)
@@ -157,7 +161,7 @@ colnames(og_data) <- c("Dose","N","Incidence", "Exp")
 og_data[,1] <- effects$dermaldose
 og_data[,2] <- effects$N_Exp
 og_data[,3] <- effects$death
-og_data[,4] <-effects$Exp
+og_data[,4] <- effects$Exp
 
 
 #### time to get the upper and lower bounds out of the 1000 curves ----
@@ -167,14 +171,29 @@ nd<-length(by_s[[1]]$Dose)
 nsims <- 1000
 mortality_df <- matrix(ncol = nsims, nrow = nd)
 
+
+# para<-lapply(gam_fit, function (x) x['parameters'])
+# para<-as.data.frame(unlist(para))
+# para<-tibble::rownames_to_column(para, "Exp")
+# colnames(para)[2]<-'Value'
+# para_list_f<-rep(c("p1","p2","p3"), times=1000)
+# para$Parameters<-para_list_f
+# 
+# b<-para[para$Parameters=='p3',]
+# max(b$Value)
+# mean(b$Value)
+
+
 for(i in 1:length(by_s)){
-  parms <- ll_fit[[i]]$parameters
-  g <- 1/(1+exp(-parms[1])); 
+  parms <- gam_fit[[i]]$parameters
+  g <-  1/(1+exp(-parms[1])); 
   a <- parms[2];
   b <- parms[3]; 
-  mortality_df[,i] <- g + (1-g)*(1/(1+exp(-a-b*log(d)))) #or by d or by_s[[i]]$Dose
-} #issue: mortality not as expected
-View(mortality_df)
+  mortality_df[,i] <- g + (1-g)*pgamma(b*d,a,1)
+} #
+
+#14 23
+# 25
 
 
 percentiles_df <- matrix(ncol = 2, nrow = nd)
@@ -191,27 +210,22 @@ for(i in 1:nd){
 dim(percentiles_df)
 
 df_percentiles <- data.frame(x=d, val= as.vector(percentiles_df), 
-                             variable=rep(paste0("category", 1:2), each=29))
-
+                             variable=rep(paste0("category", 1:2), each=39))
 
 #### plot curve with original data as well as upper and lower bounds (2.5% and 97.5% percentiles of mortality), with OG points ----
-ll_laplace<-single_dichotomous_fit(og_data[,1],og_data[,3],og_data[,2],model_type="log-logistic",fit_type="laplace")
 
+gam_laplace<-single_dichotomous_fit(og_data[,1],og_data[,3],og_data[,2],model_type="gamma",fit_type="laplace")
 
-parms <- ll_laplace$parameters
-g <- 1/(1+exp(-parms[1])); 
-a <- (parms[2]);
+parms <- gam_laplace$parameters
+g <-  1/(1+exp(-parms[1])); 
+a <- parms[2];
 b <- parms[3]; 
-d <- effects$dermaldose
-rval_og <- g + (1-g)*(1/(1+exp(-a-b*log(d))))
+rval_og <- g + (1-g)*pgamma(b*d,a,1)
 df<-as.data.frame(cbind(rval_og,d))
 names(df)<-c("effect","dose")
 
 lerror<-df_percentiles[df_percentiles$variable == "category1",2]
 uerror<-df_percentiles[df_percentiles$variable == "category2",2]
-
-lmort
-umort
 
 og_data<-as.data.frame(og_data)
 ggplot(data = df, aes(x=dose, y=effect)) + 
@@ -221,22 +235,15 @@ ggplot(data = df, aes(x=dose, y=effect)) +
   
   #geom_errorbar(aes(x=doses, ymin=lerror, ymax=uerror),color="grey")+
   
-  ggtitle("Log-logistic model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Pyraclostrobin") +
+  ggtitle("Log-logistic model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Glyphosate") +
   ylab("Mortality") +
   xlab("Estimated Dermal Dose (ug/g)")+
   scale_x_continuous(expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-      panel.background = element_blank(), axis.line = element_line(colour = "black"), 
-      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
-      axis.text.y = element_text(size=12, face='bold'),
-      axis.title.x = element_text(size=14, face='bold'),
-      axis.title.y = element_text(size=14, face='bold'),
-      plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
-
-
-### could consider other ratios 
-
-
-  
-
+        panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
 

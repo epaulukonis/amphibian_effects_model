@@ -140,6 +140,8 @@ d <- seq(0.001,1,by=0.001)
 nd <- length(d)
 nsims <- 1000
 mortality_df <- matrix(ncol = nd, nrow = nsims)
+
+
 for(i in 1:nsims){
   parms <- ll_fit[[i]]$parameters
   g <- 1/(1+exp(-parms[1])); 
@@ -154,7 +156,7 @@ df_all <- data.frame(x=d, val= as.vector(mortality_df),
                  variable=rep(paste0("category", 1:1000), each=1000))
 # View(df)
 # plot (messy)
-ggplot(data = df_all, aes(x=x, y=val)) + geom_line()
+#ggplot(data = df_all, aes(x=x, y=val)) + geom_line()
 
 # plot 0.025,0.5, 0.975 mortality estimates for each dose (tap own temple)
 percentiles_df <- matrix(ncol = 7, nrow = nsims)
@@ -225,7 +227,6 @@ View(bmds$BMDSEstimates)
 #bmds_bmd changed to bmd below stp 5/18/2022
 quantile_sims<-quantile(bmds$BMDSEstimates, probs = c(0.025,0.5,0.975), names=T)
 print(quantile_sims)
-
 
 
 five_per<-bmds[which.min(abs(1.842985 -bmds$BMDSEstimates)),]
