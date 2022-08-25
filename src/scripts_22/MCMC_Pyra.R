@@ -65,7 +65,7 @@ param<-read.csv('data_in/parameters.csv')
 ll_fit <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type="log-logistic",fit_type="laplace"))
 
 
-#pull model average BMD, bmdl, bmdu
+# #pull model average BMD, bmdl, bmdu
 bmdsorder<-c('bmds','bmdl','bmdu')
 bmds_order<-rep(bmdsorder, times=1000)
 bmds<-lapply(ll_fit, function (x) x['bmd']) #pull out bmds and bmdls
@@ -76,13 +76,14 @@ colnames(bmds)[2]<-'BMDSEstimates'
 bmds$order<-bmds_order
 bmds$Model<-'log_logistic'
 
+
 #get parameters 
-para<-lapply(ll_fit, function (x) x['parameters'])
-para<-as.data.frame(unlist(para))
-para<-tibble::rownames_to_column(para, "Exp")
-colnames(para)[2]<-'Value'
-para_list_f<-rep(c("p1","p2","p3"), times=1000)
-para$Parameters<-para_list_f
+# para<-lapply(ll_fit, function (x) x['parameters'])
+# para<-as.data.frame(unlist(para))
+# para<-tibble::rownames_to_column(para, "Exp")
+# colnames(para)[2]<-'Value'
+# para_list_f<-rep(c("p1","p2","p3"), times=1000)
+# para$Parameters<-para_list_f
 
 
 ## fit og pyraclostrobin data ----
@@ -92,7 +93,7 @@ effects$adj_sur_96<-round(1/(2^(96/effects$half_life)),3)
 effects_sub<-effects[(effects$Study =='Cusaac_2015' & effects$Species == 'Anaxyrus woodhousii'),]
 effects<-effects[!(effects$Study == 'Cusaac_2017a' | effects$Study == 'Cusaac_2015'), ] 
 effects<-rbind(effects,effects_sub)
-effects<-effects[order(effects$Study),]
+#effects<-effects[order(effects$Study),]
 #group by study, species, and application rate
 effects<-effects %>%
   group_by(Study) %>% #study
@@ -111,6 +112,7 @@ control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survi
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
 effects<-rbind(effects,control)
+effects <-effects[order(effects$Study),]
 
 
 #then, format modifier DF
@@ -132,7 +134,7 @@ derm_frac<-param[11,2]
 soil_concs_deg<-log(2)/hl*96/move_rate #with adjusted time of 96h to match adjusted survival
 soil_concs<-((effects$Application_Rate*10)/16000)*1000 #1cm mixing depth; or change depending on soil?
 dermal_dose<-(soil_concs^soil_concs_deg * kp_pyra * (dsa/dt) * derm_frac * bioavail)/effects$M_Body_Weight_g
-head(dermal_dose) #take a look
+#head(dermal_dose) #take a look
 effects$dermaldose<-dermal_dose
 effects$Mortality<-1-effects$adj_sur_96
 bw_effect<-effects$M_Body_Weight_g
@@ -145,19 +147,22 @@ derm_original<-derm_d*((as*as.numeric(app_d))/2) #modify the calculated dermal d
 derm_original<-c(derm_original,effects[c(24:29),23])
 effects$dermaldose<-derm_original
 
-names(effects)
-names(by_s[[1]])
-effects<-effects[order(effects$dermaldose),]
+effects<-effects[with(effects, order(Study, Species, Application_Rate)), ]
+#effects<-effects[order(effects$dermaldose),]
 effects$death<-round(effects$Mortality*effects$N_Exp,0)
-
 effects$Exp<-ifelse(effects$Method=="Overspray",1,0)
+#check order
+print(effects$death)
+by_s[[748]]$Effect
+
+
 
 og_data<-matrix(0,nrow=nrow(effects), ncol=4)
 colnames(og_data) <- c("Dose","N","Incidence", "Exp")
 og_data[,1] <- effects$dermaldose
 og_data[,2] <- effects$N_Exp
 og_data[,3] <- effects$death
-og_data[,4] <-effects$Exp
+og_data[,4] <- effects$Exp
 
 
 #### time to get the upper and lower bounds out of the 1000 curves ----
@@ -173,7 +178,7 @@ for(i in 1:length(by_s)){
   a <- parms[2];
   b <- parms[3]; 
   mortality_df[,i] <- g + (1-g)*(1/(1+exp(-a-b*log(d)))) #or by d or by_s[[i]]$Dose
-} #issue: mortality not as expected
+} 
 View(mortality_df)
 
 
@@ -210,20 +215,18 @@ names(df)<-c("effect","dose")
 lerror<-df_percentiles[df_percentiles$variable == "category1",2]
 uerror<-df_percentiles[df_percentiles$variable == "category2",2]
 
-lmort
-umort
+sort(df$effect)
+
 
 og_data<-as.data.frame(og_data)
-ggplot(data = df, aes(x=dose, y=effect)) + 
-  geom_line()+
-  geom_ribbon(aes(ymin =lerror, ymax = uerror), alpha = .2) +
+main<-ggplot() + 
+ #geom_density(data=bmds_df, aes(x=bmds))+
+  geom_line(data = df, aes(x=dose, y=effect))+
+  geom_ribbon(aes(x = df$dose, ymin =lerror, ymax = uerror), alpha = .2) +
   geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=Exp, fill=Exp))+
-  
-  #geom_errorbar(aes(x=doses, ymin=lerror, ymax=uerror),color="grey")+
-  
   ggtitle("Log-logistic model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Pyraclostrobin") +
   ylab("Mortality") +
-  xlab("Estimated Dermal Dose (ug/g)")+
+  xlab("")+
   scale_x_continuous(expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), axis.line = element_line(colour = "black"), 
@@ -233,10 +236,74 @@ ggplot(data = df, aes(x=dose, y=effect)) +
       axis.title.y = element_text(size=14, face='bold'),
       plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
 
+main
 
-### could consider other ratios 
+
+#range_webice<-c(2.165,172.912)
+
+# main+geom_point(aes(x=6,y=0.50),colour="red")+
+#   geom_pointrange(aes(x=6, y=0.50,xmin=2.165, xmax=172.912))
+
+ld50<-read.csv('data_in/ld50_pyra.csv')
+#ld50<-ld50[!ld50$LD50>100,]
+
+cons<-sort(ld50$LD50)[1:5]
+ld50c<-ld50[ld50$LD50 %in% cons,]
+frog<-6.288521517
+frog<-ld50[ld50$LD50 %in% frog,]
 
 
+main +
+  geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
+  geom_vline(xintercept=frog$LD50, linetype='dotted', col = 'red')+
+  # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
+  geom_point(aes(x=6,y=0.50),colour="red") 
   
+  #geom_pointrange(aes(x=6, y=0.50,xmin=2.165, xmax=172.912))
+
+
+
+
+mean(cons)
+
+
+#### BMD KDE plots for ll ----
+bmds_est<-bmds[bmds$order =='bmds',]
+
+# nsims <- 1000
+# bmds_df <- matrix(nrow = nsims, ncol = 2)
+# for(i in 1:length(ll_fit)){
+#   parms <- ll_fit[[i]]$parameters
+#   g <- 1/(1+exp(-parms[1])); 
+#   a <- parms[2];
+#   b <- parms[3]; 
+#   d <- bmds_est[i,2]
+#  bmds_df[i,2] <- g + (1-g)*(1/(1+exp(-a-b*log(d)))) #or by d or by_s[[i]]$Dose
+#  bmds_df[i,1]<-d
+# } 
+# 
+# bmds_df<-as.data.frame(bmds_df)
+# names(bmds_df)<-c("bmds","mortality")
+
+my_breaks<-c(0,1,2,3,4,20,30,40,50)
+
+bmds_hist<-
+  ggplot(data=bmds_est,aes(x=BMDSEstimates, y=..count..))+
+  geom_histogram(bins=300)+
+  ylab("Density BMDs") +
+  xlab("Estimated Dermal Dose (ug/g)")+
+  scale_x_continuous(limits=c(0,50), breaks=my_breaks, expand = c(0, 0)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16), legend.position = 'none')
+
+
+
+
+grid.arrange(main, bmds_hist,nrow=2,heights=c(4,2))
 
 

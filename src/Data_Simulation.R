@@ -8,6 +8,8 @@ library(reshape2)
 setwd('C:/Users/epauluko/OneDrive - Environmental Protection Agency (EPA)/Profile/Documents/GitHub/amphibian_effects_model')
 
 options(scipen=999)
+mod<-read.csv('data_in/As_Modifier.csv')
+
 
 # we run through the analysis and simulation with Pyraclostrobin and Glyphosate
 # evaluating statistical significance using cochran-armitage test (Neurhauser et al. 1999)
@@ -17,8 +19,6 @@ options(scipen=999)
 # and use the product of that and application rate to adjust the indirect calcuclated dermal dose
 # we format the data and output it for running it through ToxicR in Plots_and_Analysis.r
 
-
-mod<-read.csv('data_in/As_Modifier.csv')
 
 
 #### Pyraclostrobin ----
@@ -88,22 +88,26 @@ control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survi
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
 effects<-rbind(effects,control)
-min(effects$M_Body_Weight_g)
-max(effects$M_Body_Weight_g)
-min(effects$SD)
-max(effects$SD)
-effects <-effects[order(effects$Study),]
+# min(effects$M_Body_Weight_g)
+# max(effects$M_Body_Weight_g)
+# min(effects$SD)
+# max(effects$SD)
+#effects <-effects[order(effects$Study),]
+effects<-effects[with(effects, order(Study, Species, Application_Rate)), ]
+#effects$Body_Weight_g
 
 
 ###Body weights
 # effects$bw_m<-log(effects$Body_Weight_g^2 / sqrt(effects$SD^2 + effects$Body_Weight_g^2))
 # effects$bw_sd<-sqrt(log(1 + (effects$SD^2 / effects$Body_Weight_g^2)))
 
-#Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
-by_s<-split(effects, list(effects$Study,effects$Species,effects$Application_Rate), drop=T) #split by study, species, application rate use SE
 
-by_s<-by_s[order(names(by_s))]
-print(names(by_s[[1]]))
+##let's bootstrap some data based on our original dataset
+#Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
+by_s<-split(effects, list(effects$Application_Rate, effects$Species, effects$Study), drop=T)
+
+#Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
+#by_s<-split(effects, list(effects$Study,effects$Species,effects$Application_Rate), drop=T) #split by study, species, application rate use SE
 
 bw_sim<-replicate(nsims,
                   {normalize <- lapply(by_s, function(y) rnorm(nrow(y), mean=y[[12]], sd=y[[13]]))
@@ -121,10 +125,12 @@ survival_sim <- matrix(data=NA,nrow=nrow(effects),ncol=nsims)
 colnames(survival_sim)[1:nsims]<-paste0("Sur",1:nsims,"")
 names(effects)
 for(i in 1:nrow(effects)){
-  survival_sim[i,]<-rbinom(nsims, effects[i,18], effects[i,21]) #trials is number of observations for each experiment, prob is adjusted prob of survival for 96 hours
+  survival_sim[i,]<-rbinom(nsims, effects[i,18], effects[i,21]) #trials is number of observations for each experiment (N_Exp), prob is adjusted prob of survival for 96 hours
   survival_sim[i,]<-round(survival_sim[i,]/effects[i,18],3) #divide the number surviving by total trials to find the proportion that actually survived 
 }
 survival_sim<-as.data.frame(survival_sim)
+survival_sim$Sur1
+effects$adj_sur_96
 
 ###exposure parameters
 #simulate the exposure parameters from Purucker et al. 2021
@@ -244,12 +250,9 @@ print(TCR_org_50_r$Family)
  
 effects$dermaldose<-derm_original
 
-plot(derm_original ~ effects$Application_Rate) 
-print(mean(derm_original))
-sd(derm_original)
-
-
-
+# plot(derm_original ~ effects$Application_Rate) 
+# print(mean(derm_original))
+# sd(derm_original)
 
 
 ####this is for the simulated dermal doses 
@@ -335,16 +338,17 @@ derm_dose<-gather(derm_adj_r,"set","Dose",1:nsims)
 BMDS_headline_fin<-cbind(exp_n,mort_n,derm_dose) #name the output whatever run you'd like
 BMDS_headline_fin<-BMDS_headline_fin[,c(1,6,2,4)]
 
+
 #order by dose for clarity
-BMDS_headline_fin<-BMDS_headline_fin %>%
-  group_by(set) %>% #set of sims
-  arrange(Dose, .by_group=T) #this will rearrange the output in terms of order of sims, but will still work fine
+# BMDS_headline_fin<-BMDS_headline_fin %>%
+#   group_by(set) %>% #set of sims
+#   arrange(Dose, .by_group=T) #this will rearrange the output in terms of order of sims, but will still work fine
 
 
 #save.image(file='myEnvironment_simulation.RData') 
 write.csv(BMDS_headline_fin,'data_out/BMDS_headline_fin_32122.csv') #save whole file for bmds analysis
 
-#calculate means for paper here
+#calculate means for paper here----
 #mortality
 mort_sim<-1-survival_sim
 mort_n_forpaper<-gather(mort_sim,"set","Effect", 1:nsims)
@@ -411,23 +415,25 @@ weight_mean<-function(data,vector,weight){
 control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survival
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
-effects<-na.omit(effects)
 effects<-rbind(control,effects)
+effects$adj_sur_96<-effects$Survival
+effects<-na.omit(effects)
 effects <-effects[order(effects$Study),]
-
 
 
 #format data for sampling from lognormal distribution; we do this because some of the bodyweights are too low to draw from
 effects$bw_m<-log(effects$Body_Weight_g^2 / sqrt(effects$SD^2 + effects$Body_Weight_g^2))
 effects$bw_sd<-sqrt(log(1 + (effects$SD^2 / effects$Body_Weight_g^2)))
 
+effects<-effects[with(effects, order(Study, Species, Application_Rate)), ]
+effects$Body_Weight_g
+
 
 ##let's bootstrap some data based on our original dataset
 #Simulate body weights (BWs)- we need 1000 simulations of the X different BWs
 by_s<-split(effects, list(effects$Application_Rate, effects$Species, effects$Study), drop=T) #split by study, species, application rate
 #by_s<-by_s[order(names(by_s))]
-print(names(by_s[[19]]))
-
+print(names(by_s[[10]]))
 
 bw_sim<-replicate(nsims,
                   {normalize <- lapply(by_s, function(y) rlnorm(nrow(y), mean=y[[22]], sd=y[[23]]))
@@ -435,22 +441,26 @@ bw_sim<-replicate(nsims,
                   })
 bw_sim<-do.call(cbind.data.frame, bw_sim)
 colnames(bw_sim)[1:nsims]<-names<-paste0("BW",1:nsims,"")
+print(bw_sim$BW1)
+print(effects$Body_Weight_g)
 
 
 #simulate survival using a binomial distribution with modified duration  ##survival ok 5/31
-print(names(effects))
 survival_sim <- matrix(data=NA,nrow=nrow(effects),ncol=nsims)
-colnames(survival_sim)[1:nsims]<-paste0("Sur",1:nsims,"")
+colnames(survival_sim)[1:1000]<-paste0("Sur",1:nsims,"")
 names(effects)
+effects$Survival
+
 for(i in 1:nrow(effects)){
-  survival_sim[i,]<-rbinom(nsims, effects[i,19], effects[i,20]) #trials is number of observations for each experiment, prob is adjusted prob of survival for 96 hours
-  survival_sim[i,]<-round(survival_sim[i,]/effects[i,19],3) #divide the number surviving by total in exp to find the proportion that actually survived 
+  survival_sim[i,]<-rbinom(nsims, effects[i,18], effects[i,20]) #trials is number of observations for each experiment, prob is adjusted prob of survival for 96 hours
+  survival_sim[i,]<-round(survival_sim[i,]/effects[i,18],3) #divide the number surviving by total in exp to find the proportion that actually survived 
 }
 survival_sim<-as.data.frame(survival_sim)
 
+
 #check
 effects$Survival
-survival_sim$Sur1
+survival_sim$Sur847
 
 #simulate the exposure parameters from Purucker et al. 2021
 exposure_sims <- matrix(data=NA,nrow=nsims,ncol=6)
@@ -531,10 +541,10 @@ print(TCR_org_50_r$Family)
 
 effects$dermaldose<-derm_original
 
-plot(derm_original ~ effects$Body_Weight_g) 
-print(mean(derm_original))
-sd(derm_original)
-mean(effects$Mortality)
+# plot(derm_original ~ effects$Body_Weight_g) 
+# print(mean(derm_original))
+# sd(derm_original)
+# mean(effects$Mortality)
 
 
 ####For simulated dermal doses 
@@ -554,10 +564,14 @@ TCR_50_r<- TCR_50 %>%
 print(rowMeans(TCR_50_r[2:1001])) #prints TC ratio by family
 print(TCR_50_r$Family)
 
+print(effects$dermaldose)
+print(derm_adj_r$dermdose687)
+names(effects)
 
 #format the dermal dose estimates and survival estimates to use in the BBMD app
 #should be in order with effects, so that each experiment N matches with each study
 mort_n<-as.data.frame(sapply(survival_sim, function(x) effects$N_Exp - round(x*effects$N_Exp,0))) #number of individuals dying per exp
+
 #we are treating each batch like its own separate study; essentially, each set of doses has a corresponding set of survival data
 rep.col<-function(x,n){
   matrix(rep(x,each=n), ncol=n, byrow=TRUE)
@@ -574,15 +588,15 @@ BMDS_glyphosate_fin<-cbind(exp_n,mort_n,derm_dose) #name the output whatever run
 BMDS_glyphosate_fin<-BMDS_glyphosate_fin[,c(1,6,2,4)]
 
 #order by dose for clarity
-BMDS_glyphosate_fin<-BMDS_glyphosate_fin %>%
-  group_by(set) %>% #set of sims
-  arrange(Dose, .by_group=T) #this will rearrange the output in terms of order of sims, but will still work fine
+# BMDS_glyphosate_fin<-BMDS_glyphosate_fin %>%
+#   group_by(set) %>% #set of sims
+#   arrange(Dose, .by_group=T) #this will rearrange the output in terms of order of sims, but will still work fine
 
 
 #save.image(file='myEnvironment_simulation.RData') 
 write.csv(BMDS_glyphosate_fin,'data_out/BMDS_glyphosate_fin_32122.csv') #save whole file for bmds analysis
 
-#calculate means for paper here
+#calculate means for paper here ----
 #mortality
 mort_sim<-1-survival_sim
 mort_n_forpaper<-gather(mort_sim,"set","Effect", 1:nsims)
@@ -594,4 +608,3 @@ sd(BMDS_glyphosate_fin$Dose)
 
 
 
-max(effects$dermaldose)

@@ -104,7 +104,10 @@ control$Survival<-weight_mean(controls,controls$Survival, controls$N_Exp) #survi
 control$N_Exp<-sum(controls$N_Exp)#use sum of the N used in dose for final N_exp
 effects<-effects[!effects$Application_Rate == 0, ] #remove application rate of 0
 effects<-rbind(effects,control)
+effects$adj_sur_96<-effects$Survival
 effects<-na.omit(effects)
+effects <-effects[order(effects$Study),]
+
 
 fam<-as.data.frame(cbind(effects$Family, effects$Study, effects$Application_Rate))
 names(fam)<-c('Family', 'Study', "Application")
@@ -149,19 +152,26 @@ print(TCR_org_50_r$Family)
 
 effects$dermaldose<-derm_original
 
-names(effects)
-names(by_s[[1]])
-effects<-effects[order(effects$dermaldose),]
+effects<-effects[with(effects, order(Study, Species, Application_Rate)), ]
 effects$death<-round(effects$Mortality*effects$N_Exp,0)
-
+#effects<-effects[order(effects$dermaldose),]
 effects$Exp<-ifelse(effects$Method=="Overspray",1,0)
+print(effects$death)
+by_s[[4]]$Effect
 
-og_data<-matrix(0,nrow=nrow(effects), ncol=4)
-colnames(og_data) <- c("Dose","N","Incidence", "Exp")
+og_data<-matrix(0,nrow=nrow(effects), ncol=5)
+colnames(og_data) <- c("Dose","N","Incidence", "Exp","BW")
 og_data[,1] <- effects$dermaldose
 og_data[,2] <- effects$N_Exp
 og_data[,3] <- effects$death
 og_data[,4] <- effects$Exp
+og_data[,5] <- effects$Body_Weight_g
+
+round(1-(og_data[,3]/og_data[,2]),3)
+print(sims[1:39,4])
+print(effects$death)
+
+max(sims[,2])
 
 
 #### time to get the upper and lower bounds out of the 1000 curves ----
@@ -196,21 +206,21 @@ for(i in 1:length(by_s)){
 # 25
 
 
-percentiles_df <- matrix(ncol = 2, nrow = nd)
+percentiles_df <- matrix(ncol = 3, nrow = nd)
 for(i in 1:nd){
-  mort_percentiles <- quantile(mortality_df[i,], probs = c(0.025,0.975), names=T)
+  mort_percentiles <- quantile(mortality_df[i,], probs = c(0.025,0.50, 0.975), names=T)
   percentiles_df[i,1] <- mort_percentiles[[1]]
   # percentiles_df[i,2] <- mort_percentiles[[2]]
   # percentiles_df[i,3] <- mort_percentiles[[3]]
-  # percentiles_df[i,4] <- mort_percentiles[[4]]
+  percentiles_df[i,2] <- mort_percentiles[[2]]
   # percentiles_df[i,5] <- mort_percentiles[[5]]
   # percentiles_df[i,6] <- mort_percentiles[[6]]
-  percentiles_df[i,2] <- mort_percentiles[[2]]
+  percentiles_df[i,3] <- mort_percentiles[[3]]
 }
 dim(percentiles_df)
 
 df_percentiles <- data.frame(x=d, val= as.vector(percentiles_df), 
-                             variable=rep(paste0("category", 1:2), each=39))
+                             variable=rep(paste0("category", 1:3), each=39))
 
 #### plot curve with original data as well as upper and lower bounds (2.5% and 97.5% percentiles of mortality), with OG points ----
 
@@ -224,20 +234,28 @@ rval_og <- g + (1-g)*pgamma(b*d,a,1)
 df<-as.data.frame(cbind(rval_og,d))
 names(df)<-c("effect","dose")
 
+
+
 lerror<-df_percentiles[df_percentiles$variable == "category1",2]
-uerror<-df_percentiles[df_percentiles$variable == "category2",2]
+median<-df_percentiles[df_percentiles$variable == "category2",2]
+uerror<-df_percentiles[df_percentiles$variable == "category3",2]
+
+med_data<-as.data.frame(cbind(median,df$dose))
 
 og_data<-as.data.frame(og_data)
-ggplot(data = df, aes(x=dose, y=effect)) + 
-  geom_line()+
-  geom_ribbon(aes(ymin =lerror, ymax = uerror), alpha = .2) +
+og_data[,5]<-as.character(og_data[,5])
+
+
+
+
+main<-ggplot() + 
+  #geom_density(data=bmds_df, aes(x=bmds))+
+  geom_line(data = df, aes(x=dose, y=effect))+
+  geom_ribbon(aes(x = df$dose, ymin =lerror, ymax = uerror), alpha = .2) +
   geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=Exp, fill=Exp))+
-  
-  #geom_errorbar(aes(x=doses, ymin=lerror, ymax=uerror),color="grey")+
-  
-  ggtitle("Log-logistic model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Glyphosate") +
+  ggtitle("Gamma model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Glyphosate") +
   ylab("Mortality") +
-  xlab("Estimated Dermal Dose (ug/g)")+
+  xlab("")+
   scale_x_continuous(expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
@@ -247,3 +265,53 @@ ggplot(data = df, aes(x=dose, y=effect)) +
         axis.title.y = element_text(size=14, face='bold'),
         plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
 
+main
+
+ld50<-read.csv('data_in/ld50_glypho.csv')
+#ld50<-ld50[!ld50$LD50>100,]
+cons<-sort(ld50$LD50)[1:5]
+ld50c<-ld50[ld50$LD50 %in% cons,]
+frog<-c(0.002980385, 0.000480939)
+
+min(cons)
+max(cons)
+mean(cons)
+
+frog<-ld50[ld50$LD50 %in% frog,]
+
+
+main +
+  geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
+  geom_vline(xintercept=frog[1,1], linetype='dotted', col = 'red')+
+  geom_vline(xintercept=frog[2,1], linetype='dotted', col = 'red')+
+  # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
+  geom_point(aes(x=0.017,y=0.50),colour="red") 
+
+
+sort(df$effect)
+mean(ld50$LD50)
+
+
+
+
+
+# ggplot(data = df, aes(x=dose, y=effect)) + 
+#   geom_line()+
+#   geom_line(data=med_data,aes(x=V2,y=median,colour='blue'))+
+#   geom_ribbon(aes(ymin =lerror, ymax = uerror), alpha = .2) +
+#   geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=BW, fill=BW, shape=BW))+
+#   scale_shape_manual(values=c(1:7))+
+#   
+#   ggtitle("Gamma model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Glyphosate") +
+#   ylab("Mortality") +
+#   xlab("Estimated Dermal Dose (ug/g)")+
+#   #scale_x_continuous(expand = c(0, 0)) + 
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
+#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+#         axis.text.y = element_text(size=12, face='bold'),
+#         axis.title.x = element_text(size=14, face='bold'),
+#         axis.title.y = element_text(size=14, face='bold'),
+#         plot.title = element_text(face = 'bold', size = 16)) #first run without this to get legend
+
+#look at max of points (larger x-axis for simulations could explain )
