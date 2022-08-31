@@ -219,15 +219,17 @@ sort(df$effect)
 
 
 og_data<-as.data.frame(og_data)
+
+my_breaks_m<-c(0,10,20,30,40,50,55)
 main<-ggplot() + 
  #geom_density(data=bmds_df, aes(x=bmds))+
   geom_line(data = df, aes(x=dose, y=effect))+
   geom_ribbon(aes(x = df$dose, ymin =lerror, ymax = uerror), alpha = .2) +
   geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=Exp, fill=Exp))+
-  ggtitle("Log-logistic model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Pyraclostrobin") +
+  ggtitle("Log-logistic Pyraclostrobin Curve") +
   ylab("Mortality") +
-  xlab("")+
-  scale_x_continuous(expand = c(0, 0)) + 
+  xlab("Dose (ug/g)")+
+  scale_x_continuous(limits=c(0,55),breaks=my_breaks_m,expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), axis.line = element_line(colour = "black"), 
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -253,22 +255,16 @@ frog<-6.288521517
 frog<-ld50[ld50$LD50 %in% frog,]
 
 
-main +
-  geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
-  geom_vline(xintercept=frog$LD50, linetype='dotted', col = 'red')+
-  # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
-  geom_point(aes(x=6,y=0.50),colour="red") 
-  
+# main +
+#   geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
+#   geom_vline(xintercept=frog$LD50, linetype='dotted', col = 'red')+
+#   # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
+#   geom_point(aes(x=6,y=0.50),colour="red") 
+#   
   #geom_pointrange(aes(x=6, y=0.50,xmin=2.165, xmax=172.912))
 
+#bmds_est<-bmds[bmds$order =='bmds',]
 
-
-
-mean(cons)
-
-
-#### BMD KDE plots for ll ----
-bmds_est<-bmds[bmds$order =='bmds',]
 
 # nsims <- 1000
 # bmds_df <- matrix(nrow = nsims, ncol = 2)
@@ -285,25 +281,45 @@ bmds_est<-bmds[bmds$order =='bmds',]
 # bmds_df<-as.data.frame(bmds_df)
 # names(bmds_df)<-c("bmds","mortality")
 
-my_breaks<-c(0,1,2,3,4,20,30,40,50)
+my_breaks<-c(0,1,2,3,4,5,10,20,30,40,50, 55)
 
-bmds_hist<-
-  ggplot(data=bmds_est,aes(x=BMDSEstimates, y=..count..))+
+
+# parms <- ll_laplace$parameters
+# g <- 1/(1+exp(-parms[1])); 
+# a <- (parms[2]);
+# b <- parms[3]; 
+# d <- bmds$BMDSEstimates
+# rval_og <- g + (1-g)*(1/(1+exp(-a-b*log(d))))
+# df_bmd<-as.data.frame(cbind(rval_og,d))
+# names(df_bmd)<-c("bmdseffect","bmdsdose")
+
+
+bmds_hist_py<-
+  ggplot(data=bmds,aes(x=BMDSEstimates, y=..count..,group=order,fill=order))+
   geom_histogram(bins=300)+
   ylab("Density BMDs") +
-  xlab("Estimated Dermal Dose (ug/g)")+
-  scale_x_continuous(limits=c(0,50), breaks=my_breaks, expand = c(0, 0)) + 
+  xlab("Dose (ug/g)")+
+  scale_x_continuous(limits=c(0,55),breaks=my_breaks, expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
         axis.text.y = element_text(size=12, face='bold'),
         axis.title.x = element_text(size=14, face='bold'),
         axis.title.y = element_text(size=14, face='bold'),
-        plot.title = element_text(face = 'bold', size = 16), legend.position = 'none')
+        plot.title = element_text(face = 'bold', size = 16), legend.position = "none")
+
+bmds_hist_py
 
 
+final_glypho<-main +
+  geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
+  geom_vline(xintercept=frog[1,1], linetype='dotted', col = 'red')+
+  geom_vline(xintercept=frog[2,1], linetype='dotted', col = 'red')+
+  # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
+  geom_point(aes(x=0.017,y=0.50),colour="red") 
 
 
-grid.arrange(main, bmds_hist,nrow=2,heights=c(4,2))
+grid.arrange(final_glypho, bmds_hist_py,nrow=2,heights=c(4.5,1.5))
+
 
 

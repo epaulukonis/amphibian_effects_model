@@ -43,9 +43,9 @@ length(sims$set)
 
 #these are 1000 data set simulations
 by_s<-split(sims, list(sims$set), drop=T) #split by simulation
-by_s
-by_s[[1]]
-by_s[[1000]]
+# by_s
+# by_s[[1]]
+# by_s[[1000]]
 
 ###note, only uncomment if need to revisit MA
 # 
@@ -79,10 +79,9 @@ by_s[[1000]]
 
 
 #model the log-logistic single model using the simulated sets
-by_s
+
 ll_fit <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type="log-logistic",fit_type="mcmc"))
-ll_fit[[1]]
-ll_fit[[1000]]
+
 
 #posterior of the bmd
 ll_fit[[1]]$bmd_dist

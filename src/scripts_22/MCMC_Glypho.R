@@ -56,6 +56,19 @@ param<-read.csv('data_in/parameters.csv')
 #model the log-logistic single model using the simulated sets
 gam_fit <- lapply(by_s, function(y) single_dichotomous_fit(y[,2],y[,4],y[,3],model_type="gamma",fit_type="laplace"))
 
+
+# #pull model average BMD, bmdl, bmdu
+bmdsorder<-c('bmds','bmdl','bmdu')
+bmds_order<-rep(bmdsorder, times=1000)
+bmds<-lapply(gam_fit, function (x) x['bmd']) #pull out bmds and bmdls
+bmds<-as.data.frame(unlist(bmds))
+bmds<-tibble::rownames_to_column(bmds, "Simulation")
+bmds$Simulation = substr(bmds$Simulation,1,nchar(bmds$Simulation)-1)
+colnames(bmds)[2]<-'BMDSEstimates'
+bmds$order<-bmds_order
+bmds$Model<-'gamma'
+
+
 ## fit og glyphosate data ----
 #the duration for all of the glyphosate studies is already set to 96 hours; not need to calculate it using exponential growth curve
 effects$adj_sur_96<-effects$Survival
@@ -246,17 +259,17 @@ og_data<-as.data.frame(og_data)
 og_data[,5]<-as.character(og_data[,5])
 
 
-
+my_breaks_m<-c(0,0.020,0.040,0.060)
 
 main<-ggplot() + 
   #geom_density(data=bmds_df, aes(x=bmds))+
   geom_line(data = df, aes(x=dose, y=effect))+
   geom_ribbon(aes(x = df$dose, ymin =lerror, ymax = uerror), alpha = .2) +
   geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=Exp, fill=Exp))+
-  ggtitle("Gamma model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Glyphosate") +
+  ggtitle("Gamma Glyphosate Curve") +
   ylab("Mortality") +
-  xlab("")+
-  scale_x_continuous(expand = c(0, 0)) + 
+  xlab("Dose (ug/g)")+
+  scale_x_continuous(limits=c(0,0.065),breaks=my_breaks_m,expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -279,8 +292,28 @@ mean(cons)
 
 frog<-ld50[ld50$LD50 %in% frog,]
 
+my_breaks<-c(0,0.002,0.005,0.007,0.02,0.04,0.06)
 
-main +
+bmds_hist_gly<-
+  ggplot(data=bmds,aes(x=BMDSEstimates, y=..count..,group=order, fill=order))+
+  geom_histogram(bins=100)+
+  ylab("Density BMDs") +
+  xlab("Dose (ug/g)")+
+  scale_x_continuous(limits=c(0,0.065), breaks=round(my_breaks,2), expand = c(0, 0)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title.x = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold'),
+        plot.title = element_text(face = 'bold', size = 16), legend.position="none")
+
+bmds_hist_gly
+
+
+
+
+final_glypho<-main +
   geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
   geom_vline(xintercept=frog[1,1], linetype='dotted', col = 'red')+
   geom_vline(xintercept=frog[2,1], linetype='dotted', col = 'red')+
@@ -288,10 +321,7 @@ main +
   geom_point(aes(x=0.017,y=0.50),colour="red") 
 
 
-sort(df$effect)
-mean(ld50$LD50)
-
-
+grid.arrange(final_glypho, bmds_hist_gly,nrow=2,heights=c(4.5,1.5))
 
 
 
