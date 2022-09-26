@@ -172,6 +172,11 @@ effects$Exp<-ifelse(effects$Method=="Overspray",1,0)
 print(effects$death)
 by_s[[4]]$Effect
 
+
+write.csv(effects,'data_out/glyphosate_final_DD.csv')
+
+
+
 og_data<-matrix(0,nrow=nrow(effects), ncol=5)
 colnames(og_data) <- c("Dose","N","Incidence", "Exp","BW")
 og_data[,1] <- effects$dermaldose
@@ -259,17 +264,17 @@ og_data<-as.data.frame(og_data)
 og_data[,5]<-as.character(og_data[,5])
 
 
-my_breaks_m<-c(0,0.020,0.040,0.060)
+my_breaks_m<-c(-10,-5,-3,-2.7)
 
 main<-ggplot() + 
   #geom_density(data=bmds_df, aes(x=bmds))+
-  geom_line(data = df, aes(x=dose, y=effect))+
-  geom_ribbon(aes(x = df$dose, ymin =lerror, ymax = uerror), alpha = .2) +
-  geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=Exp, fill=Exp))+
+  geom_line(data = df, aes(x=log(dose), y=effect))+
+  geom_ribbon(aes(x = log(df$dose), ymin =lerror, ymax = uerror), alpha = .2) +
+  geom_point(data=og_data, aes(x=log(Dose),y=(Incidence/N), colour=Exp, fill=Exp))+
   ggtitle("Gamma Glyphosate Curve") +
   ylab("Mortality") +
-  xlab("Dose (ug/g)")+
-  scale_x_continuous(limits=c(0,0.065),breaks=my_breaks_m,expand = c(0, 0)) + 
+  xlab("log(Dose (ug/g))")+
+  scale_x_continuous(limits=c(-10,-2.7),breaks=my_breaks_m,expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -292,14 +297,14 @@ mean(cons)
 
 frog<-ld50[ld50$LD50 %in% frog,]
 
-my_breaks<-c(0,0.002,0.005,0.007,0.02,0.04,0.06)
+my_breaks<-c(-10,-5,-3,-2.7)
 
 bmds_hist_gly<-
-  ggplot(data=bmds,aes(x=BMDSEstimates, y=..count..,group=order, fill=order))+
+  ggplot(data=bmds,aes(x=log(BMDSEstimates), y=..count..,group=order, fill=order))+
   geom_histogram(bins=100)+
   ylab("Density BMDs") +
-  xlab("Dose (ug/g)")+
-  scale_x_continuous(limits=c(0,0.065), breaks=round(my_breaks,2), expand = c(0, 0)) +
+  xlab("log(Dose (ug/g))")+
+  scale_x_continuous(limits=c(-10,-2.7), breaks=round(my_breaks,2), expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -314,14 +319,15 @@ bmds_hist_gly
 
 
 final_glypho<-main +
-  geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
-  geom_vline(xintercept=frog[1,1], linetype='dotted', col = 'red')+
-  geom_vline(xintercept=frog[2,1], linetype='dotted', col = 'red')+
+  geom_boxplot(data=ld50c, aes(x=log(LD50), y=Mortality), width=0.05) +
+  geom_vline(xintercept=log(frog[1,1]), linetype='dotted', col = 'red')+
+  geom_vline(xintercept=log(frog[2,1]), linetype='dotted', col = 'red')+
   # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
-  geom_point(aes(x=0.017,y=0.50),colour="red") 
+  geom_point(aes(x=log(0.017),y=0.50),colour="red") 
 
 
 grid.arrange(final_glypho, bmds_hist_gly,nrow=2,heights=c(4.5,1.5))
+
 
 
 

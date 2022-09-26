@@ -153,8 +153,10 @@ effects$death<-round(effects$Mortality*effects$N_Exp,0)
 effects$Exp<-ifelse(effects$Method=="Overspray",1,0)
 #check order
 print(effects$death)
-by_s[[748]]$Effect
 
+
+
+write.csv(effects,'data_out/pyraclostrobin_final_DD.csv')
 
 
 og_data<-matrix(0,nrow=nrow(effects), ncol=4)
@@ -179,7 +181,7 @@ for(i in 1:length(by_s)){
   b <- parms[3]; 
   mortality_df[,i] <- g + (1-g)*(1/(1+exp(-a-b*log(d)))) #or by d or by_s[[i]]$Dose
 } 
-View(mortality_df)
+# View(mortality_df)
 
 
 percentiles_df <- matrix(ncol = 2, nrow = nd)
@@ -215,21 +217,21 @@ names(df)<-c("effect","dose")
 lerror<-df_percentiles[df_percentiles$variable == "category1",2]
 uerror<-df_percentiles[df_percentiles$variable == "category2",2]
 
-sort(df$effect)
-
 
 og_data<-as.data.frame(og_data)
+group.colors=c("#2c7fb8","#9ecae1")
 
-my_breaks_m<-c(0,10,20,30,40,50,55)
+my_breaks_m<-c(0,1,2,3,4,5)
 main<-ggplot() + 
  #geom_density(data=bmds_df, aes(x=bmds))+
-  geom_line(data = df, aes(x=dose, y=effect))+
-  geom_ribbon(aes(x = df$dose, ymin =lerror, ymax = uerror), alpha = .2) +
-  geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=Exp, fill=Exp))+
+  geom_line(data = df, aes(x=log(dose), y=effect))+
+  geom_ribbon(aes(x = log(df$dose), ymin =lerror, ymax = uerror), alpha = .2) +
+  geom_point(data=og_data, aes(x=log(Dose),y=(Incidence/N), colour=Exp, fill=Exp))+
+  #scale_color_manual(values=group.colors)+
   ggtitle("Log-logistic Pyraclostrobin Curve") +
   ylab("Mortality") +
-  xlab("Dose (ug/g)")+
-  scale_x_continuous(limits=c(0,55),breaks=my_breaks_m,expand = c(0, 0)) + 
+  xlab("log(Dose (ug/g))")+
+  scale_x_continuous(limits=c(-1,4.2),breaks=my_breaks_m,expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), axis.line = element_line(colour = "black"), 
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -239,6 +241,7 @@ main<-ggplot() +
       plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
 
 main
+
 
 
 #range_webice<-c(2.165,172.912)
@@ -281,7 +284,7 @@ frog<-ld50[ld50$LD50 %in% frog,]
 # bmds_df<-as.data.frame(bmds_df)
 # names(bmds_df)<-c("bmds","mortality")
 
-my_breaks<-c(0,1,2,3,4,5,10,20,30,40,50, 55)
+my_breaks<-c(0,1,2,3,4)
 
 
 # parms <- ll_laplace$parameters
@@ -295,11 +298,11 @@ my_breaks<-c(0,1,2,3,4,5,10,20,30,40,50, 55)
 
 
 bmds_hist_py<-
-  ggplot(data=bmds,aes(x=BMDSEstimates, y=..count..,group=order,fill=order))+
-  geom_histogram(bins=300)+
+  ggplot(data=bmds,aes(x=log(BMDSEstimates), y=..count..,group=order,fill=order))+
+  geom_histogram(bins=200)+
   ylab("Density BMDs") +
-  xlab("Dose (ug/g)")+
-  scale_x_continuous(limits=c(0,55),breaks=my_breaks, expand = c(0, 0)) +
+  xlab("log(Dose (ug/g))")+
+  scale_x_continuous(limits=c(-1,4.2),breaks=my_breaks, expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -311,15 +314,15 @@ bmds_hist_py<-
 bmds_hist_py
 
 
-final_glypho<-main +
-  geom_boxplot(data=ld50c, aes(x=LD50, y=Mortality), width=0.05) +
-  geom_vline(xintercept=frog[1,1], linetype='dotted', col = 'red')+
-  geom_vline(xintercept=frog[2,1], linetype='dotted', col = 'red')+
+final_pyra<-main +
+  geom_boxplot(data=ld50c, aes(x=log(LD50), y=Mortality), width=0.05) +
+  geom_vline(xintercept=log(frog[1,1]), linetype='dotted', col = 'red')+
+  geom_vline(xintercept=log(frog[2,1]), linetype='dotted', col = 'red')+
   # geom_point(data=frog, aes(x=LD50,y=Mortality),colour="black", shape=18, size=4) +
-  geom_point(aes(x=0.017,y=0.50),colour="red") 
+  geom_point(aes(x=log(6),y=0.50),colour="red") 
 
 
-grid.arrange(final_glypho, bmds_hist_py,nrow=2,heights=c(4.5,1.5))
+grid.arrange(final_pyra, bmds_hist_py,nrow=2,heights=c(4.5,1.5))
 
 
 
