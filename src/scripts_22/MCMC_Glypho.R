@@ -173,9 +173,7 @@ print(effects$death)
 by_s[[4]]$Effect
 
 
-write.csv(effects,'data_out/glyphosate_final_DD.csv')
-
-
+#write.csv(effects,'data_out/glyphosate_final_DD.csv')
 
 og_data<-matrix(0,nrow=nrow(effects), ncol=5)
 colnames(og_data) <- c("Dose","N","Incidence", "Exp","BW")
@@ -184,11 +182,9 @@ og_data[,2] <- effects$N_Exp
 og_data[,3] <- effects$death
 og_data[,4] <- effects$Exp
 og_data[,5] <- effects$Body_Weight_g
-
 round(1-(og_data[,3]/og_data[,2]),3)
 print(sims[1:39,4])
 print(effects$death)
-
 max(sims[,2])
 
 
@@ -220,9 +216,6 @@ for(i in 1:length(by_s)){
   mortality_df[,i] <- g + (1-g)*pgamma(b*d,a,1)
 } #
 
-#14 23
-# 25
-
 
 percentiles_df <- matrix(ncol = 3, nrow = nd)
 for(i in 1:nd){
@@ -236,14 +229,11 @@ for(i in 1:nd){
   percentiles_df[i,3] <- mort_percentiles[[3]]
 }
 dim(percentiles_df)
-
 df_percentiles <- data.frame(x=d, val= as.vector(percentiles_df), 
                              variable=rep(paste0("category", 1:3), each=39))
 
 #### plot curve with original data as well as upper and lower bounds (2.5% and 97.5% percentiles of mortality), with OG points ----
-
 gam_laplace<-single_dichotomous_fit(og_data[,1],og_data[,3],og_data[,2],model_type="gamma",fit_type="laplace")
-
 parms <- gam_laplace$parameters
 g <-  1/(1+exp(-parms[1])); 
 a <- parms[2];
@@ -257,7 +247,6 @@ names(df)<-c("effect","dose")
 lerror<-df_percentiles[df_percentiles$variable == "category1",2]
 median<-df_percentiles[df_percentiles$variable == "category2",2]
 uerror<-df_percentiles[df_percentiles$variable == "category3",2]
-
 med_data<-as.data.frame(cbind(median,df$dose))
 
 og_data<-as.data.frame(og_data)
@@ -272,15 +261,15 @@ main<-ggplot() +
   geom_ribbon(aes(x = log(df$dose), ymin =lerror, ymax = uerror), alpha = .2) +
   geom_point(data=og_data, aes(x=log(Dose),y=(Incidence/N), colour=Exp, fill=Exp))+
   ggtitle("Gamma Glyphosate Curve") +
-  ylab("Mortality") +
-  xlab("log(Dose (ug/g))")+
+  labs(x = expression(paste('log(Dose) [ ug ', g^-1, ' ]')), 
+       y = 'Proportion Mortality')+ # adds in labels for x and y axis
   scale_x_continuous(limits=c(-10,-2.7),breaks=my_breaks_m,expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
         axis.text.y = element_text(size=12, face='bold'),
         axis.title.x = element_text(size=14, face='bold'),
-        axis.title.y = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold',margin = margin(t = 0, r = 10, b = 0, l = 0)),
         plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
 
 main
@@ -302,15 +291,15 @@ my_breaks<-c(-10,-5,-3,-2.7)
 bmds_hist_gly<-
   ggplot(data=bmds,aes(x=log(BMDSEstimates), y=..count..,group=order, fill=order))+
   geom_histogram(bins=100)+
-  ylab("Density BMDs") +
-  xlab("log(Dose (ug/g))")+
+  labs(x = expression(paste('log(Dose) [ ug ', g^-1, ' ]')), 
+       y = 'Denity BMDS') +
   scale_x_continuous(limits=c(-10,-2.7), breaks=round(my_breaks,2), expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
         axis.text.y = element_text(size=12, face='bold'),
         axis.title.x = element_text(size=14, face='bold'),
-        axis.title.y = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold',margin = margin(t = 0, r = 10, b = 0, l = 0)),
         plot.title = element_text(face = 'bold', size = 16), legend.position="none")
 
 bmds_hist_gly
@@ -326,28 +315,33 @@ final_glypho<-main +
   geom_point(aes(x=log(0.017),y=0.50),colour="red") 
 
 
+### add in the LCX points that Alex compiled 
+#for Alex's SSD plots:
+ordered_df<-df[order(df$effect),]
+#LC1: 	0.000000000
+#LC10:  0.001577734
+#850 width, 650 height
+
+#let's add the LC01 and LC10 to the plot 
+lcx<-read.csv("data_in/ECOTOX_glyphosate.csv")
+lcx<-lcx[lcx$Exposure.Duration.Mean..Author. == 96,]
+namset<-c("Species.Group", "Organism.Lifestage", "Conc.1.Mean..Standardized." ,"Endpoint","Conc.1.Units..Standardized.")
+lcx<-lcx[,names(lcx) %in% namset]
+lcx<-na.omit(lcx)
+lcx<-lcx[!grepl('kg', lcx$Conc.1.Units..Standardized.),] 
+
+lcx$lc50bcf<-lcx$Conc.1.Mean..Standardized.*(0.05*(10^-3.4))
+lcx$Mortality<-ifelse(lcx$Endpoint == "LC01",0.01,0.10)
+lcx$Mortality<-ifelse(lcx$Endpoint == "LC05",0.05,lcx$Mortality)
+
+lcx<-lcx[lcx$Organism.Lifestage == 'Tadpole',]
+
+
+final_glypho_supp<-final_glypho + 
+ geom_boxplot(lcx, mapping=aes(x=log(lc50bcf), y=Mortality, group = Endpoint),width=0.05) 
+
+log(lcx$lc50bcf)
+log(ld50c$LD50)
+
+
 grid.arrange(final_glypho, bmds_hist_gly,nrow=2,heights=c(4.5,1.5))
-
-
-
-
-# ggplot(data = df, aes(x=dose, y=effect)) + 
-#   geom_line()+
-#   geom_line(data=med_data,aes(x=V2,y=median,colour='blue'))+
-#   geom_ribbon(aes(ymin =lerror, ymax = uerror), alpha = .2) +
-#   geom_point(data=og_data, aes(x=Dose,y=(Incidence/N), colour=BW, fill=BW, shape=BW))+
-#   scale_shape_manual(values=c(1:7))+
-#   
-#   ggtitle("Gamma model fit, with 2.5 and 97.5 percentiles as upper and lower bound: Glyphosate") +
-#   ylab("Mortality") +
-#   xlab("Estimated Dermal Dose (ug/g)")+
-#   #scale_x_continuous(expand = c(0, 0)) + 
-#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-#         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
-#         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
-#         axis.text.y = element_text(size=12, face='bold'),
-#         axis.title.x = element_text(size=14, face='bold'),
-#         axis.title.y = element_text(size=14, face='bold'),
-#         plot.title = element_text(face = 'bold', size = 16)) #first run without this to get legend
-
-#look at max of points (larger x-axis for simulations could explain )

@@ -9,7 +9,7 @@ head(lab)
 names(lab)
 
 soil<-na.omit(lab[,c(1,2,4,8)])
-unique(soil$chemical)
+#unique(soil$chemical)
 
 
 ###scatter plot lm all pesticides----
@@ -131,7 +131,9 @@ names(soil)
 soil<-soil[,c(3:10)]
 soil_edit<-tidyr::gather(soil, "depth","conc",5:8)
 
-soil_edit$Error<-soil_edit$soil_conc_ugg - soil_edit$conc 
+unique(soil_edit$depth)
+
+soil_edit$Ratio<-soil_edit$conc/soil_edit$soil_conc_ugg #original/calculated
 names(soil_edit)
 unique(soil_edit$depth)
 
@@ -145,10 +147,12 @@ soil_edit$Chemical<-sapply(soil$chemical, CapStr)
 
 
 t_1cm <- dplyr::filter(soil_edit, depth == 'conc_ugg_1cm')
-p1 <- ggplot(t_1cm, aes(x=Chemical, y=Error)) + 
+#t_1cm$look<-log2(t_1cm$Ratio)
+p1 <- ggplot(t_1cm, aes(x=Chemical, y=log2(Ratio))) + 
   geom_boxplot(aes(fill=Chemical))+
   # scale_y_continuous(breaks=seq(0,100, 25))+
   ggtitle("1 cm Depth") +
+  ylab("Log2(Ratio)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -160,11 +164,13 @@ p1 <- ggplot(t_1cm, aes(x=Chemical, y=Error)) +
 p1
 
 
+
 t_5mm <- dplyr::filter(soil_edit, depth == 'conc_ugg_5mm')
-p2 <- ggplot(t_5mm, aes(x=Chemical, y=Error)) + 
+p2 <- ggplot(t_5mm, aes(x=Chemical, y=log2(Ratio))) + 
   geom_boxplot(aes(fill=Chemical))+
   scale_y_continuous(breaks=seq(-100,175, 50))+
   ggtitle("5 mm Depth") +
+  ylab("Log2(Ratio)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -177,10 +183,11 @@ p2
 
 
 t_1mm <- dplyr::filter(soil_edit, depth == 'conc_ugg_1mm')
-p3 <- ggplot(t_1mm, aes(x=Chemical, y=Error)) + 
+p3 <- ggplot(t_1mm, aes(x=Chemical, y=log2(Ratio))) + 
   geom_boxplot(aes(fill=Chemical))+
   scale_y_continuous(breaks=seq(-500,50,100))+
   ggtitle("1 mm Depth") +
+  ylab("Log2(Ratio)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
@@ -193,10 +200,11 @@ p3
 
 
 t_1inch <- dplyr::filter(soil_edit, depth == 'conc_ugg_1inch')
-p4 <- ggplot(t_1inch, aes(x=Chemical, y=Error)) + 
+p4 <- ggplot(t_1inch, aes(x=Chemical, y=log2(Ratio))) + 
   geom_boxplot(aes(fill=Chemical))+
   # scale_y_continuous(breaks=seq(-500,50,100))+
   ggtitle("1 inch Depth") +
+  ylab("Log2(Ratio)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"), 
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),

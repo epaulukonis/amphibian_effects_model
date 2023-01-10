@@ -229,15 +229,15 @@ main<-ggplot() +
   geom_point(data=og_data, aes(x=log(Dose),y=(Incidence/N), colour=Exp, fill=Exp))+
   #scale_color_manual(values=group.colors)+
   ggtitle("Log-logistic Pyraclostrobin Curve") +
-  ylab("Mortality") +
-  xlab("log(Dose (ug/g))")+
+  labs(x = expression(paste('log(Dose) [ ug ', g^-1, ' ]')), 
+       y = 'Proportion Mortality')+ 
   scale_x_continuous(limits=c(-1,4.2),breaks=my_breaks_m,expand = c(0, 0)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
       panel.background = element_blank(), axis.line = element_line(colour = "black"), 
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
       axis.text.y = element_text(size=12, face='bold'),
       axis.title.x = element_text(size=14, face='bold'),
-      axis.title.y = element_text(size=14, face='bold'),
+      axis.title.y = element_text(size=14, face='bold',margin = margin(t = 0, r = 10, b = 0, l = 0)),
       plot.title = element_text(face = 'bold', size = 16), legend.position = 'none') #first run without this to get legend
 
 main
@@ -300,18 +300,19 @@ my_breaks<-c(0,1,2,3,4)
 bmds_hist_py<-
   ggplot(data=bmds,aes(x=log(BMDSEstimates), y=..count..,group=order,fill=order))+
   geom_histogram(bins=200)+
-  ylab("Density BMDs") +
-  xlab("log(Dose (ug/g))")+
+  labs(x = expression(paste('log(Dose) [ ug ', g^-1, ' ]')), 
+       y = 'Denity BMDS') +
   scale_x_continuous(limits=c(-1,4.2),breaks=my_breaks, expand = c(0, 0)) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size= 12, face='bold'),
         axis.text.y = element_text(size=12, face='bold'),
         axis.title.x = element_text(size=14, face='bold'),
-        axis.title.y = element_text(size=14, face='bold'),
+        axis.title.y = element_text(size=14, face='bold', margin = margin(t = 0, r = 10, b = 0, l = 0)),
         plot.title = element_text(face = 'bold', size = 16), legend.position = "none")
 
 bmds_hist_py
+
 
 
 final_pyra<-main +

@@ -1,0 +1,410 @@
+---
+title: "gly_LC01_data"
+author: "Alex Dhond"
+date: "12/8/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This script creates an SSD using LC01 toxicity data derived from the ECOTOX extract for Glyphosate for amphibians.
+
+# Set working directory
+```{r}
+# Set working directory to file location
+setwd("C:/Users/adhond/OneDrive - Environmental Protection Agency (EPA)/Profile/Desktop/Tom Purucker Work/pyra-glypho-ssds")
+```
+
+# Clear existing workspace
+```{r}
+# Clear existing workspace
+rm(list=ls())
+```
+
+# Load required packages
+```{r}
+library(dplyr) # Used for data manipulation
+library(tidyr) # data manipulation
+library(data.table) # Used for creating data tables
+library(EnvStats) # Used for calculating geometric means
+library(fitdistrplus) # for fitting various distributions to the data
+library(flexsurv) # for fitting parametric distributions
+library(ggplot2) # for plotting
+library(readxl) # read in excel sheets
+```
+
+# Load in the source data
+Load in amphibian data from the Excel sheet
+```{r}
+# Read in the amphibian data
+data <- readxl::read_xlsx("Glyphosate_ECOTOX_Extract_12-08.xlsx", sheet = 1)
+```
+
+# Clean up data and filter for SSD model
+Extract relevant columns, rename them, remove NAs, and filter only Glyphosate 
+```{r}
+# Extract only relevant columns
+data <- data[, c(1:4,20, 25, 28)]
+
+# Rename columns
+colnames(data) <- c("CAS", "Chemical", "Species", "Common Name", "Conc", "Conc Units", "Endpoint")
+
+# Remove NAs
+data <- na.omit(data)
+
+# Rename the chemicals into one single chem (all glyphosate)
+data$Chemical[data$Chemical == "N-(Phosphonomethyl)glycine compd. with 2-propanamine (1:1)"] <- "Glyphosate"
+data$Chemical[data$Chemical == "N-(Phosphonomethyl)glycine potassium salt (1:1)"] <- "Glyphosate"
+data$Chemical[data$Chemical == "N-(Phosphonomethyl)glycine sodium salt (2:3)"] <- "Glyphosate"
+```
+
+# Filter by endpoint
+```{r}
+# Filter by LC05s first
+LC05 <- data %>%
+  filter(
+    Endpoint == "LC05"
+  )
+
+# Filter by LC01s as well
+LC01 <- data %>%
+  filter(
+    Endpoint == "LC01"
+  )
+
+# Filter by LC10s
+LC10 <- data %>%
+  filter(
+    Endpoint == "LC10"
+  )
+```
+
+So, there is a lot of data for LC10 values for amphibians, only 1 species for LC05, and a few species for LC01.
+
+# Fit 4 distributions to the glyphosate data to see which have best-fit
+I will fit the log-normal, log-logistic, gamma, and Weibull distributions. I will then assess model fit using the Anderson-Darling (AD) statistic (lower AD means better fit). Then, I will create an SSD from the distribution with the lowest AD statistic.
+```{r}
+# Set the chemical to Glyphosate, save as a variable
+single.ssd.chem <- "Glyphosate"
+
+# Create an empty list to hold the output value
+individual.hc5s <- list()
+
+#This loop calculates HC5 values from chemical-specific SSDs for each chemical in the all.chems list. It uses the best-fit method to fit the most appropriate distribution to individual chemical toxicity data (out of log-normal, log-logisitc, Weibull, and gamma distributions). The Anderson-Darling statistic is used to determine best-fit. The distribution with the lowest Anderson-Darling statistic is assigned as the "best.fit" method.
+for(i in single.ssd.chem) {
+  
+  fit_gamma <- NULL
+  best.fit <- NULL
+  
+  #Calculating the average toxicity value (LC50) for each species 
+  IndividualSSDs <- LC01 %>% filter(Chemical == i) %>%
+    group_by(Species) %>%
+    summarise(
+      average = geoMean(Conc), # here I am using "average" instead of "geomean" as earlier
+      minimum = min(Conc),
+      sd = sd(Conc),
+      n = n())
+  
+  IndividualSSDs <- unique(IndividualSSDs) #Adding toxicity data for each chemical to a list and making sure there are no duplicates
+  
+  # Create intermediate data frame
+  Newdf <- IndividualSSDs
+  
+  #Calculating the probability points for each species 
+  df <- Newdf[order(Newdf$average),]
+  df$frac <- ppoints(df$average, 0.5)
+  df
+  
+  #Fit a distribution to the plotted points
+  fit_llogis <- fitdist(df$average, "llogis") # fit llogis
+  fit_lnorm <- fitdist(df$average, "lnorm") # fit log normal
+  fit_gamma <- try(fitdist(df$average, "gamma"), silent = TRUE) # use try here as gamma often fails
+  fit_weibull <- fitdist(df$average, "weibull") # fit weibull
+  
+  # if there is an error with the gamma distribution, fit the other three instead
+  if("try-error" %in% class(fit_gamma)){
+    ll <- gofstat(fit_llogis)
+    ln <- gofstat(fit_lnorm)
+    w <- gofstat(fit_weibull)
+    
+    #Fit the best distribution to the data; identify it by the lowest anderson darling statistic
+    a <- unlist(c(ll[8], ln[8], w[8]))
+    best.fit.table <- data.table(c("llogis", "lnorm", "weibull"), a)
+    m <- min(a)
+    b <- best.fit.table$V1[best.fit.table$a == m]
+  }  else {
+    ll <- gofstat(fit_llogis)
+    ln <- gofstat(fit_lnorm)
+    g <- gofstat(fit_gamma)
+    w <- gofstat(fit_weibull)
+    
+    #Fit the best distribution to the data; identify it by the lowest anderson darling statistic
+    a <- unlist(c(ll[8], ln[8], g[8], w[8]))
+    best.fit.table <- data.table(c("llogis", "lnorm", "gamma", "weibull"), a)
+    m <- min(a)
+    b <- best.fit.table$V1[best.fit.table$a == m]}
+  
+  #Calculate the best fit distribution
+  best.fit <- fitdist(df$average, b)
+  
+  # Extract the estimated HC5 value
+  hc5 <- quantile(best.fit, probs = 0.05)
+  Estimated_HC5 <- hc5$quantiles$`p=0.05`
+  
+  # Bootstrap the HC5 value with upper and lower CIs
+  fit_boot <- bootdist(best.fit, bootmethod = 'param', niter = 1000)
+  
+  # This step is not necessary I am just using it to check the bootstrap is working
+  bootstrap_hc5 <- quantile(fit_boot, probs = 0.05)
+  
+  # Save the bootstrap and upper and lower confidence intervals
+  Bootstrapped_HC5 <- bootstrap_hc5$quantiles$`p=0.05`
+  HC5_lower_ci <- bootstrap_hc5$quantCI[1,1]
+  HC5_upper_ci <- bootstrap_hc5$quantCI[2,1]
+  
+  # Save the HC5 values
+  hc5.table <- data.frame(i, Estimated_HC5, Bootstrapped_HC5, HC5_lower_ci, HC5_upper_ci, b, m)
+  
+  individual.hc5s[[i]] <- hc5.table
+}
+
+#Binding the list of individual SSD hc5 values together 
+individual.hc5s <- rbindlist(individual.hc5s)
+colnames(individual.hc5s) <- c("Chemical", "SSD Estimated HC5", "SSD Bootstrapped HC5", "HC5 Lower CI", "HC5 Upper CI", "SSD Dist.", "SSD AD")
+
+# Save the glyphosate HC5 as its own dataframe
+gly.LC01.HC5 <- individual.hc5s
+```
+
+# Assess output of the loop
+```{r}
+# View the best fit table for Glyphosate
+best.fit.table
+
+# Check glyphosate hc5
+gly.LC01.HC5
+```
+
+So, based on the results here it looks like the llogis distribution was the best-fit, as it had the lowest AD statistic.
+
+
+# Extract all HC values from the best-fit distribution (HC1, HC5, HC10...HC95, HC99)
+In this code chunk I will run the best-fit distribution again and extract the confidence intervals and HC values from the distribution. I will save them in a separate dataframe.
+```{r}
+# Open an empty list to hold the output of the loop below
+HC.list <- list()
+
+# Create a sequence increasing be 0.05
+initial.seq <- seq(0.05, 0.95, by = 0.05)
+
+# Add 0.01 and 0.99 to the beginning and end, respectively
+initial.seq <- append(initial.seq, 0.99) # add .99 to end
+initial.seq <- append(initial.seq, 0.01, 0) # add 0.01 to front
+
+# Check sequence
+initial.seq
+length(initial.seq)
+
+# This sequence now has all the "HC" values ranging from HC1 to HC99 by 5. Length of 21
+
+
+# Create a loop that iterates through the sequence, takes the value, applies it to the ith value of the distribution (ie 0.01 = the HC1)
+for (i in 1:21){ # there are 21 values between 0.01 to 0.99
+  
+  # Set an index to match the sequence
+  index <- initial.seq[i]
+  
+  # Bootstrap upper and lower CIs around the value (1000 iterations)
+  fit_boot <- bootdist(best.fit, bootmethod = 'param', niter = 1000)
+
+  # Save the HC value 
+  HC.bootstrap <- quantile(fit_boot, probs = index)
+  
+  # Save HCs for that value
+  HC.value.1 <- HC.bootstrap[[1]]
+  HC.value.2 <- HC.value.1[1,1]
+  
+  # Save upper and lower CIs for that value
+  HC.lower.CI <- HC.bootstrap$quantCI[1,1]
+  HC.upper.CI <- HC.bootstrap$quantCI[2,1]
+
+  # save all into table
+  final.table <- data.table(index, HC.value.2, HC.upper.CI, HC.lower.CI)
+
+  # Save the results of each run to a single element of the list
+  HC.list[[i]] <- final.table
+}
+
+# Bind all list elements together into a dataframe (so each element is a row now)
+HC.list <- rbindlist(HC.list)
+
+# Save as LC01 HC data. Add in distribution used, as well as what data this is coming from
+gly.LC01.HC.data <- HC.list
+
+# CHange column names
+colnames(gly.LC01.HC.data) <- c("Percentile", "HC.Value", "HC.Upper.CI", "HC.Lower.CI")
+
+# Add in distribution and data ID
+gly.LC01.HC.data$Distribution <- "llogis"
+gly.LC01.HC.data$Data.ID <- "Glyphosate.LC01"
+
+```
+
+We can now save this as an Excel sheet or CSV for use later. 
+
+# Plot the SSD for the Glyphosate LC01 data
+```{r}
+# Filter the data to only include LC01 data for glyphosate
+gly.LC01.data <- LC01 %>%
+  group_by(Species) %>% # group by species
+  summarise(
+    geomean = geoMean(Conc)
+  )
+
+# Remove duplicate values as we have already calculated the geomean
+gly.LC01.data <- unique(gly.LC01.data)
+
+# Create an intermediate data frame to for calculations
+df <- gly.LC01.data
+```
+
+### 2. Order species by toxicity values and plot
+SSDs are based on a probability distribution, so the toxicity values need to be ordered from most sensitive to least sensitive.
+```{r}
+# Order the species by toxicity values and calculate the fraction
+df <- df[order(df$geomean),]
+
+# ppoints calculates a distribution of probability points
+df$frac <- ppoints(df$geomean, 0.5)
+
+# Re-order the points once again based on the distribution
+df <- df[order(df$geomean), ]
+
+
+# Plot the raw data
+ggplot(data = df) + # the input data is the glyphosate data
+  geom_point(aes(x = geomean, y = frac), size = 3) + # the points are the geomeans
+  geom_text(aes(x = geomean, y = frac, label = Species), hjust = 1.1, size = 3) + # the text is the species label
+  theme_bw() +
+  scale_x_log10(limits = c(0.00005, max(df$geomean))) + # set the x axis limits
+  labs(x = expression(paste('Concentration of Glyphosate (LC01) [ mg ', L^-1, ' ]')), 
+       y = 'Fraction of species affected') # add a label to the axes
+```
+
+### 3. Fit a distribution to the data
+In this example, I will be using the lognormal distribution. There are multiple other distributions that can be fitted, and it is best practice to fit a number of distributions and then use model comparisons to decide which distributions fit the best.
+```{r}
+# Use fitdistrplus to fit a distribution to the data
+fit <- fitdist(df$geomean, "llogis") # fit a distribution to the geometric means of species
+
+# The output gives the estimate of the mean log as well as standard errors
+fit
+```
+
+
+### 4. Bootstrap the HC5 and CIs for the distribution
+Once the distribution has been fitted, you can extract the HC5 values along with the distribution's confidence intervals.
+```{r}
+hc5.table <- list()
+# First extract the HC5 (the 5th percentile)
+hc5 <- quantile(fit, probs = 0.05)
+hc5
+
+# Then bootstrap the CIs - I am using 1000 iterations here, you can use more but then it is a longer wait time
+fit_boot <- bootdist(fit, bootmethod = 'param', niter = 1000)
+
+# As a QC check, I am extracting the HC5 from the bootstrapped value
+bootstrap_hc5 <- quantile(fit_boot, probs = 0.05)
+
+lower_ci <- bootstrap_hc5$quantCI[1,1]
+upper_ci <- bootstrap_hc5$quantCI[2,1]
+estimated_hc5 <- hc5$quantiles$`p=0.05`
+Chemical <- "Glyphosate"
+
+# Save the HC5 values
+hc5.table[[1]] <- data.frame(Chemical, estimated_hc5, lower_ci, upper_ci)
+
+```
+
+
+### 5. Generate the plot data
+Now that we have extracted the HC5, we should also try and plot the data in the "classic" SSD fashion. The method is somewhat involved, but the code below should explain most of it.
+```{r}
+# Predict the points from the distribution on a grid of 1000
+
+## Generate x values
+newxs <- 10^(seq(log10(0.1), (log10(max(df$geomean))+0.5), length.out = 1000)) #creating a sequence from the smallest value to the largest value (with a bit extra so the plot does not just end at the largest value)
+
+## Create the grid
+pp <- apply(fit_boot$estim, 1, function(x) pllogis(newxs, x[1], x[2])) # using the "plnorm" function because we fit the log-normal distribution
+
+## Make the grid a data frame
+bootdat <- data.frame(pp) # each column is the result from a bootstrap sample
+
+## add x-values
+bootdat$newxs <- newxs
+require(reshape2) # needed for data manipulation
+
+## bring to long format
+bootdat <- melt(bootdat, id.vars = 'newxs')
+
+## get Ci from bootstraps
+cis <- apply(pp, 1, quantile, c(0.025, 0.975))
+
+## Label the lower and upper confidence intervals
+rownames(cis) <- c('lwr' ,'upr')
+
+## Save the x values and y values into a dataframe
+pdat <- data.frame(newxs, py = pllogis(newxs, shape = fit$estimate[1], scale = fit$estimate[2]))
+
+## add CI
+pdat <- cbind(pdat, t(cis))
+
+# add x coordinates for species names from fitted values
+df$fit <- 10^(log10(qllogis(df$frac, shape = fit$estimate[1], scale = fit$estimate[2])) - 0.4)
+```
+
+### 6. Plot the data
+Now, use ggplot to plot the data. I have commented what each line of the plot code means
+```{r}
+# plot it!
+gly.lc01.plot <- ggplot()+
+  geom_line(data = bootdat, aes(x = newxs, y = value, group = variable), col = 'steelblue', alpha = 0.05) +  # this is the 1000s of "distributions" we fitted onto the grid earlier
+  geom_point(data = df, aes(x = geomean, y = frac)) + # this adds in the species points from the original data
+  geom_line(data = pdat, aes(x = newxs, y = py), col = 'red') + # this is the true fit line
+  geom_line(data = pdat, aes(x = newxs, y = lwr), linetype = 'dashed') + # upper confidence interval
+  geom_line(data = pdat, aes(x = newxs, y = upr), linetype = 'dashed') + # lower confidence interval
+  geom_text(data = df, aes(x = fit, y = frac, label = Species), hjust = 1.2, size = 3)+
+  theme_bw() + # changes plot theme
+  scale_x_log10() + # log scale on x axis
+  labs(x = expression(paste('Glyphosate (LC01) [ mg ', L^-1, ' ]')), 
+       y = 'Proportion of species affected') # adds in labels for x and y axis
+gly.lc01.plot
+```
+
+
+# Save the SSDs and tables
+```{r}
+# Glyphosate LC01 data saving
+write.csv(gly.LC01.HC.data, file = "Glyphosate_LC01_Data.csv")
+
+# Save the LC01 SSD image
+tiff("Glyphosate_LC01_SSD_Image.tiff", units = "in", width = 7.5, height = 7, res = 300) # load an empty tiff file with these dimensions
+gly.lc01.plot # put in the final results plot
+dev.off() # close graphics so it saves
+
+```
+
+# RUn all code
+```{r}
+
+```
+
+
+
+
+
+
+
