@@ -696,6 +696,11 @@ pyra.pred.ssd.plot.fin<-pyra.pred.ssd.plot.bcf +
   annotate("text", x = log10(1.6), y = 0.50, label = "Estimated LD50 Pyraclostrobin", size=3)
 
 pyra.pred.ssd.plot.fin
+
+
+pyra.pred.hc.data$HC.Value *(0.05*(10^3.99))
+pyra.pred.hc.data$HC.Upper.CI*(0.05*(10^3.99))
+
 ```
 
 

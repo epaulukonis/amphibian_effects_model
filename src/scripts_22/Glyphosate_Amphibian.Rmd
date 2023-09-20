@@ -704,5 +704,8 @@ gly.pred.ssd.plot.fin<-gly.pred.ssd.plot.bcf +
 
 gly.pred.ssd.plot.fin
 
+Gly.Pred.HC.Data$HC.Value*(0.05*(10^-3.4))
+Gly.Pred.HC.Data$HC.Lower.CI*(0.05*(10^-3.4))
+
 
 ```
