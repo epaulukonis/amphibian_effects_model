@@ -48,7 +48,7 @@ p <- ggplot(soil_t, aes(app_rate_ug_cm2, conc,color=depth))+
   ylim(0,200)+
   xlim(0,100)+
  # geom_smooth(method=lm, se=FALSE, fullrange=TRUE)+
-  ylab("Calculated Soil Sonc (ug/g)") +
+  ylab("Calculated Soil Conc (ug/g)") +
   xlab("Application rate (ug/cm2)")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         legend.key=element_blank(),panel.background = element_blank(), 
